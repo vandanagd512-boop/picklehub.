@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Invoice #INV-{{ order.id[:8]|upper }} - PickleHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f4f6f9;
+            color: #2d3436;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+        .invoice-card {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #e17055;
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #e17055;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .invoice-title {
+            text-align: right;
+        }
+        .invoice-title h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #2d3436;
+            letter-spacing: 0.05em;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        .table-wrap {
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th {
+            background: #f8fafc;
+            color: #475569;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .summary-box {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 2.5rem;
+        }
+        .summary-table {
+            width: 320px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.9rem;
+        }
+        .summary-total {
+            border-top: 2px solid #2d3436;
+            border-bottom: 2px solid #2d3436;
+            padding: 0.6rem 0;
+            margin-top: 0.5rem;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #e17055;
+        }
+        .footer-note {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: #64748b;
+        }
+        .btn-bar {
+            max-width: 850px;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-print {
+            background: #e17055;
+            color: #fff;
+            padding: 0.6rem 1.4rem;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-back {
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        @media print {
+            body { padding: 0; background: #fff; }
+            .btn-bar { display: none; }
+            .invoice-card { box-shadow: none; border: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="btn-bar">
+        <a href="{{ url_for('orders.detail', order_id=order.id) }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Order #{{ order.id[:8] }}
+        </a>
+        <button onclick="window.print()" class="btn-print">
+            <i class="fas fa-print"></i> Print Invoice
+        </button>
+    </div>
+
+    <div class="invoice-card">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <div class="logo">
+                    <i class="fas fa-jar"></i> PickleHub
+                </div>
+                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.35rem;">Authentic Homemade Indian Pickles Marketplace</p>
+                <p style="font-size: 0.8rem; color: #64748b;">Plot 42, Artisan Food Park, Hitech City, Hyderabad, 500081</p>
+                <p style="font-size: 0.8rem; color: #64748b;"><strong>GSTIN:</strong> 36AAACP1234L1Z5 | <strong>FSSAI Lic:</strong> 13622014000452</p>
+            </div>
+            <div class="invoice-title">
+                <h1>TAX INVOICE</h1>
+                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;"><strong>Invoice No:</strong> INV-{{ order.id[:8]|upper }}</p>
+                <p style="font-size: 0.85rem; color: #64748b;"><strong>Invoice Date:</strong> {{ order.created_at.strftime('%d-%b-%Y') if order.created_at else 'Recent' }}</p>
+                <p style="font-size: 0.85rem; color: #64748b;"><strong>Order ID:</strong> #{{ order.id }}</p>
+            </div>
+        </div>
+
+        <!-- Addresses -->
+        <div class="details-grid">
+            <div>
+                <h3 style="font-size: 0.9rem; text-transform: uppercase; color: #475569; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Billed & Shipped To:</h3>
+                {% if order.shipping_address %}
+                <p style="font-weight: 700; color: #1e293b;">{{ order.shipping_address.full_name }}</p>
+                <p style="color: #475569;">{{ order.shipping_address.address_line1 }}</p>
+                {% if order.shipping_address.address_line2 %}<p style="color: #475569;">{{ order.shipping_address.address_line2 }}</p>{% endif %}
+                <p style="color: #475569;">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} - {{ order.shipping_address.postal_code }}</p>
+                <p style="color: #475569;">Phone: +91 {{ order.shipping_address.phone }}</p>
+                {% else %}
+                <p style="color: #475569;">Customer Account: {{ order.user_id }}</p>
+                {% endif %}
+            </div>
+            <div style="text-align: right;">
+                <h3 style="font-size: 0.9rem; text-transform: uppercase; color: #475569; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Payment Details:</h3>
+                <p style="color: #475569;"><strong>Payment Mode:</strong> {{ order.payment_method|upper }}</p>
+                <p style="color: #475569;"><strong>Payment Status:</strong> {{ order.payment_status|capitalize }}</p>
+                {% if order.payment_id %}
+                <p style="color: #475569;"><strong>Txn ID:</strong> {{ order.payment_id }}</p>
+                {% endif %}
+                <p style="color: #475569;"><strong>Order Status:</strong> {{ order.status|capitalize }}</p>
+            </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Product Description</th>
+                        <th style="width: 100px;">HSN Code</th>
+                        <th style="width: 80px; text-align: center;">Qty</th>
+                        <th style="width: 110px; text-align: right;">Unit Price</th>
+                        <th style="width: 120px; text-align: right;">Amount (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <strong style="color: #1e293b;">{{ item.product_name }}</strong>
+                            <p style="font-size: 0.8rem; color: #64748b;">Authentic Handmade Pickle Jar (Net Wt. {{ item.product.weight if item.product and item.product.weight else '400g' }})</p>
+                        </td>
+                        <td>20019000</td>
+                        <td style="text-align: center;">{{ item.quantity }}</td>
+                        <td style="text-align: right;">₹{{ "%.2f"|format(item.price) }}</td>
+                        <td style="text-align: right; font-weight: 600;">₹{{ "%.2f"|format(item.price * item.quantity) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-box">
+            <div class="summary-table">
+                <div class="summary-row">
+                    <span style="color: #64748b;">Subtotal (Tax Inclusive):</span>
+                    <span style="font-weight: 600;">₹{{ "%.2f"|format(order.total_amount + (order.discount_amount or 0) - (order.shipping_cost or 0)) }}</span>
+                </div>
+                {% if order.discount_amount and order.discount_amount > 0 %}
+                <div class="summary-row" style="color: #10b981;">
+                    <span>Promo Discount {% if order.coupon_code %}({{ order.coupon_code }}){% endif %}:</span>
+                    <span style="font-weight: 600;">-₹{{ "%.2f"|format(order.discount_amount) }}</span>
+                </div>
+                {% endif %}
+                <div class="summary-row">
+                    <span style="color: #64748b;">Delivery Charges:</span>
+                    <span style="font-weight: 600; color: #10b981;">{% if order.shipping_cost and order.shipping_cost > 0 %}₹{{ "%.2f"|format(order.shipping_cost) }}{% else %}FREE{% endif %}</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Grand Total:</span>
+                    <span>₹{{ "%.2f"|format(order.total_amount) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-note">
+            <div>
+                <p><strong>Declaration:</strong> We declare that this invoice shows the actual price of the pickles</p>
+                <p>described and that all particulars are true and correct. Computer generated invoice.</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="font-weight: 700; color: #1e293b;">For PickleHub India Pvt. Ltd.</p>
+                <div style="margin-top: 1.5rem; color: #94a3b8; font-style: italic;">[Digitally Authorized Signatory]</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Coupons - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="font-size: 2rem; margin-bottom: 2rem;">
+        <i class="fas fa-ticket-alt"></i> Manage Coupons
+    </h1>
+    
+    <!-- Add Coupon Form -->
+    <div class="glass" style="padding: 1.5rem; margin-bottom: 2rem;">
+        <h2 style="margin-bottom: 1rem;">Create New Coupon</h2>
+        <form method="POST" action="{{ url_for('admin.create_coupon') }}">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <input type="text" name="code" required placeholder="Coupon Code (e.g., SAVE20)" style="padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                <select name="coupon_type" style="padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
+                </select>
+                <input type="number" name="value" required placeholder="Value" step="0.01" style="padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                <input type="number" name="min_order_value" placeholder="Min Order Value" step="0.01" style="padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                <input type="number" name="max_discount" placeholder="Max Discount" step="0.01" style="padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                <input type="number" name="usage_limit" placeholder="Usage Limit" style="padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                <input type="number" name="valid_days" placeholder="Valid Days" value="30" style="padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                <input type="text" name="description" placeholder="Description" style="padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                <i class="fas fa-plus"></i> Create Coupon
+            </button>
+        </form>
+    </div>
+    
+    <!-- Coupons List -->
+    {% if coupons %}
+    <div class="glass" style="padding: 1.5rem;">
+        <h2 style="margin-bottom: 1rem;">All Coupons</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+            {% for coupon in coupons %}
+            <div class="glass-card" style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.2rem;">{{ coupon.code }}</h3>
+                    <span class="badge badge-{{ 'success' if coupon.is_active else 'danger' }}">
+                        {{ 'Active' if coupon.is_active else 'Inactive' }}
+                    </span>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">{{ coupon.description or 'No description' }}</p>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="color: var(--accent); font-weight: 600;">
+                        {{ coupon.value }}{{ '%' if coupon.coupon_type == 'percentage' else '₹' }} OFF
+                    </span>
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">Min: ₹{{ coupon.min_order_value }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">Used: {{ coupon.used_count }}/{{ coupon.usage_limit or '∞' }}</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <form method="POST" action="{{ url_for('admin.toggle_coupon_status', coupon_id=coupon.id) }}" style="flex: 1;">
+                        <button type="submit" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.85rem; padding: 0.5rem;">
+                            {{ 'Deactivate' if coupon.is_active else 'Activate' }}
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.delete_coupon', coupon_id=coupon.id) }}" onsubmit="return confirm('Are you sure you want to delete this coupon?');">
+                        <button type="submit" class="btn btn-danger" style="padding: 0.5rem 0.8rem; font-size: 0.85rem;" title="Delete Coupon">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% set per_page = per_page|default(20) %}
+        {% if total > per_page %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+            {% if page > 1 %}
+            <a href="{{ url_for('admin.coupons', page=page-1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="btn btn-secondary" style="background: var(--accent); color: white;">{{ page }}</span>
+            
+            {% if (page * per_page) < total %}
+            <a href="{{ url_for('admin.coupons', page=page+1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 4rem; text-align: center;">
+        <i class="fas fa-ticket-alt" style="font-size: 5rem; color: var(--accent); opacity: 0.3; margin-bottom: 1.5rem;"></i>
+        <h2 style="margin-bottom: 0.5rem;">No coupons yet</h2>
+        <p style="color: var(--text-secondary);">Create your first coupon above.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

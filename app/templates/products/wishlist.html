@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}My Wishlist - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    <!-- Breadcrumb & Header -->
+    <div style="margin-bottom: 2rem;">
+        <nav style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+            <a href="{{ url_for('main.index') }}" style="color: var(--text-secondary); text-decoration: none;">Home</a>
+            <span style="margin: 0 0.5rem;">/</span>
+            <span style="color: var(--accent); font-weight: 600;">My Wishlist</span>
+        </nav>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">
+                <i class="fas fa-heart" style="color: var(--accent);"></i> My Saved Pickles
+            </h1>
+            <span style="color: var(--text-secondary); font-size: 0.95rem;">
+                {{ items|length }} item{% if items|length != 1 %}s{% endif %} saved
+            </span>
+        </div>
+    </div>
+
+    {% if items %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.8rem;">
+        {% for item in items %}
+        {% set product = item.product %}
+        {% if product %}
+        <div class="glass-card" style="border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--border);">
+            <!-- Image Wrap -->
+            <div style="position: relative; height: 220px; overflow: hidden; background: var(--bg-secondary);">
+                {% if product.images and product.images[0] %}
+                <img src="{{ product.images[0] }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%;"><i class="fas fa-jar" style="font-size: 3rem; color: var(--accent); opacity: 0.4;"></i></div>
+                {% endif %}
+                
+                {% if product.discount_percentage %}
+                <span class="badge badge-danger" style="position: absolute; top: 12px; left: 12px; font-weight: 700; font-size: 0.78rem;">
+                    {{ product.discount_percentage | round(0) | int }}% OFF
+                </span>
+                {% endif %}
+                
+                <!-- Remove from wishlist button -->
+                <form method="POST" action="{{ url_for('products.toggle_wishlist', product_id=product.id) }}" style="position: absolute; top: 10px; right: 10px;">
+                    <button type="submit" class="btn" style="width: 36px; height: 36px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); color: #ff7675; border: none; cursor: pointer;" title="Remove from Wishlist">
+                        <i class="fas fa-trash-alt" style="font-size: 0.9rem;"></i>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Body -->
+            <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span class="badge badge-primary" style="font-size: 0.7rem; text-transform: uppercase;">{{ product.spice_level|default('Medium') }} Spice</span>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-weight-hanging"></i> {{ product.weight or '500g' }}</span>
+                </div>
+                
+                <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); line-height: 1.3;">
+                    <a href="{{ url_for('products.detail', product_id=product.id) }}" style="color: inherit; text-decoration: none;">
+                        {{ product.name }}
+                    </a>
+                </h3>
+                
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.4; flex: 1;">
+                    {{ product.description[:75] }}...
+                </p>
+                
+                <!-- Price Row -->
+                <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="font-size: 1.35rem; font-weight: 800; color: var(--accent);">₹{{ "%.2f"|format(product.price) }}</span>
+                    {% if product.original_price and product.original_price > product.price %}
+                    <span style="font-size: 0.9rem; text-decoration: line-through; color: var(--text-secondary);">₹{{ "%.2f"|format(product.original_price) }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Move to Cart Form -->
+                <form method="POST" action="{{ url_for('products.move_to_cart', product_id=product.id) }}">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 0.95rem; padding: 0.7rem; font-weight: 600; border-radius: 8px;">
+                        <i class="fas fa-shopping-bag"></i> Move to Cart
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty Wishlist State -->
+    <div class="glass" style="max-width: 600px; margin: 3rem auto; padding: 3.5rem 2rem; text-align: center; border-radius: 16px;">
+        <div style="width: 90px; height: 90px; border-radius: 50%; background: rgba(225, 112, 85, 0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.8rem;">
+            <i class="far fa-heart"></i>
+        </div>
+        <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Your Wishlist is Empty</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+            Explore our curated selection of 25 authentic regional Indian pickles and click the heart icon on your favorites!
+        </p>
+        <a href="{{ url_for('products.list_products') }}" class="btn btn-primary" style="padding: 0.8rem 1.8rem; font-size: 1rem; font-weight: 600; border-radius: 8px;">
+            <i class="fas fa-search"></i> Explore All Pickles
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

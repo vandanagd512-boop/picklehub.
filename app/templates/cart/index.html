@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="font-size: 2rem; margin-bottom: 2rem;">
+        <i class="fas fa-shopping-cart"></i> Shopping Cart
+    </h1>
+    
+    {% if cart and cart.items %}
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+        <!-- Cart Items -->
+        <div>
+            <div class="glass" style="padding: 1.5rem;">
+                {% for item in cart.items %}
+                <div style="display: flex; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border);">
+                    <div style="width: 100px; height: 100px; background: var(--bg-secondary); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        {% if item.image %}
+                        <img src="{{ item.image }}" alt="{{ item.product_name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                        {% else %}
+                        <i class="fas fa-jar" style="font-size: 2rem; color: var(--accent); opacity: 0.3;"></i>
+                        {% endif %}
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">{{ item.product_name }}</h3>
+                        <p style="color: var(--accent); font-weight: 600; font-size: 1.2rem; margin-bottom: 0.75rem;">₹{{ item.price }}</p>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px;">
+                                <form method="POST" action="{{ url_for('cart.update') }}" style="display: flex;">
+                                    <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                                    <button type="submit" name="quantity" value="{{ item.quantity - 1 }}" style="padding: 0.5rem 1rem; border: none; background: transparent; color: var(--text-primary); cursor: pointer;">-</button>
+                                    <span style="padding: 0 0.5rem; font-weight: 600;">{{ item.quantity }}</span>
+                                    <button type="submit" name="quantity" value="{{ item.quantity + 1 }}" style="padding: 0.5rem 1rem; border: none; background: transparent; color: var(--text-primary); cursor: pointer;">+</button>
+                                </form>
+                            </div>
+                            <span style="color: var(--text-secondary);">₹{{ item.get_total() }}</span>
+                        </div>
+                    </div>
+                    <form method="POST" action="{{ url_for('cart.remove') }}">
+                        <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                        <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem;">
+                    <form method="POST" action="{{ url_for('cart.clear') }}">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fas fa-trash"></i> Clear Cart
+                        </button>
+                    </form>
+                    <a href="{{ url_for('main.search') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Summary -->
+        <div>
+            <div class="glass" style="padding: 1.5rem; position: sticky; top: 100px;">
+                <h2 style="margin-bottom: 1.5rem;">Order Summary</h2>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <span style="color: var(--text-secondary);">Subtotal</span>
+                    <span style="font-weight: 600;">₹{{ cart.get_total() }}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <span style="color: var(--text-secondary);">Shipping</span>
+                    <span style="font-weight: 600; color: var(--success);">Free</span>
+                </div>
+                
+                <div style="padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Coupon Code</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="coupon-code" placeholder="Enter coupon code" style="flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                        <button type="button" onclick="validateCoupon()" class="btn btn-secondary">Apply</button>
+                    </div>
+                    <div id="coupon-message" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+                </div>
+                
+                <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700;">
+                        <span>Total</span>
+                        <span style="color: var(--accent);" id="total-amount">₹{{ cart.get_total() }}</span>
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('orders.checkout') }}" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                    <i class="fas fa-lock"></i> Proceed to Checkout
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 4rem; text-align: center;">
+        <i class="fas fa-shopping-cart" style="font-size: 5rem; color: var(--accent); opacity: 0.3; margin-bottom: 1.5rem;"></i>
+        <h2 style="margin-bottom: 0.5rem;">Your cart is empty</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Add some delicious pickles to get started!</p>
+        <a href="{{ url_for('main.search') }}" class="btn btn-primary" style="justify-content: center;">
+            <i class="fas fa-search"></i> Browse Products
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div id="cart-data" data-subtotal="{{ cart.get_total() if cart else 0 }}" style="display: none;"></div>
+
+<script>
+let discount = 0;
+const cartSubtotal = parseFloat(document.getElementById('cart-data').dataset.subtotal);
+
+async function validateCoupon() {
+    const couponCode = document.getElementById('coupon-code').value;
+    const messageDiv = document.getElementById('coupon-message');
+    const totalAmount = document.getElementById('total-amount');
+    
+    if (!couponCode) {
+        messageDiv.innerHTML = '<span style="color: var(--error);">Please enter a coupon code</span>';
+        return;
+    }
+    
+    try {
+        const response = await fetch('{{ url_for("cart.validate_coupon") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'coupon_code=' + couponCode
+        });
+        
+        const data = await response.json();
+        
+        if (data.valid) {
+            discount = data.discount;
+            messageDiv.innerHTML = '<span style="color: var(--success);">' + data.message + '</span>';
+            const subtotal = cartSubtotal;
+            const total = subtotal - discount;
+            totalAmount.textContent = '₹' + total.toFixed(2);
+        } else {
+            messageDiv.innerHTML = '<span style="color: var(--error);">' + data.message + '</span>';
+        }
+    } catch (error) {
+        messageDiv.innerHTML = '<span style="color: var(--error);">Error validating coupon</span>';
+    }
+}
+</script>
+{% endblock %}

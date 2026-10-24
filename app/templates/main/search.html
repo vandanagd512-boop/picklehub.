@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Search - PickleHub{% endblock %}
+
+{% block extra_css %}
+<style>
+.product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.skeleton {
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 768px) {
+    .filters-sidebar {
+        display: none;
+    }
+    .filters-sidebar.active {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2rem;">
+        <!-- Filters Sidebar -->
+        <aside class="glass filters-sidebar" style="padding: 1.5rem; height: fit-content; position: sticky; top: 100px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0;">Filters</h3>
+                <button id="closeFilters" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="filterForm" method="GET" action="{{ url_for('main.search') }}">
+                <input type="hidden" name="q" value="{{ query }}">
+                <input type="hidden" name="sort" value="{{ request.args.get('sort', '') }}">
+                
+                <!-- Category Filter -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Category</label>
+                    <select name="category" id="categoryFilter" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if filters.get('category_id') == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Price Range -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Price Range</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="number" name="min_price" id="minPrice" value="{{ filters.get('min_price') or '' }}" placeholder="Min" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                        <span>-</span>
+                        <input type="number" name="max_price" id="maxPrice" value="{{ filters.get('max_price') or '' }}" placeholder="Max" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                </div>
+                
+                <!-- Spice Level -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Spice Level</label>
+                    <select name="spice_level" id="spiceLevel" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                        <option value="">All Levels</option>
+                        <option value="low" {% if filters.get('spice_level') == 'low' %}selected{% endif %}>Mild</option>
+                        <option value="medium" {% if filters.get('spice_level') == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="high" {% if filters.get('spice_level') == 'high' %}selected{% endif %}>Spicy</option>
+                    </select>
+                </div>
+                
+                <!-- Rating -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Minimum Rating</label>
+                    <select name="min_rating" id="minRating" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                        <option value="">All Ratings</option>
+                        <option value="4" {% if filters.get('min_rating') == '4' %}selected{% endif %}>4+ Stars</option>
+                        <option value="3" {% if filters.get('min_rating') == '3' %}selected{% endif %}>3+ Stars</option>
+                        <option value="2" {% if filters.get('min_rating') == '2' %}selected{% endif %}>2+ Stars</option>
+                    </select>
+                </div>
+                
+                <!-- Featured Only -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="featured" id="featuredOnly" value="true" {% if filters.get('is_featured') %}checked{% endif %} style="accent-color: var(--accent);">
+                        Featured Only
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                
+                <a href="{{ url_for('main.search') }}" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+                    <i class="fas fa-times"></i> Clear Filters
+                </a>
+            </form>
+        </aside>
+        
+        <!-- Results -->
+        <div>
+            <!-- Search Bar -->
+            <div class="glass" style="padding: 1.5rem; margin-bottom: 2rem;">
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" id="searchInput" name="q" value="{{ query }}" placeholder="Search for pickles..." style="flex: 1; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 1rem;">
+                    <button id="searchBtn" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button id="mobileFilterBtn" class="btn btn-secondary" style="display: none;">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Results Info -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <p style="color: var(--text-secondary); margin: 0;">
+                    {% if query %}
+                    Showing {{ total }} results for "{{ query }}"
+                    {% else %}
+                    Showing {{ total }} products
+                    {% endif %}
+                </p>
+                <select id="sortSelect" style="padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    <option value="">Sort by: Relevance</option>
+                    <option value="newest" {% if request.args.get('sort') == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="price_asc" {% if request.args.get('sort') == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_desc" {% if request.args.get('sort') == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="rating" {% if request.args.get('sort') == 'rating' %}selected{% endif %}>Rating</option>
+                    <option value="popularity" {% if request.args.get('sort') == 'popularity' %}selected{% endif %}>Popularity</option>
+                </select>
+            </div>
+            
+            <!-- Loading Skeleton -->
+            <div id="loadingSkeleton" style="display: none; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+                {% for i in range(8) %}
+                <div class="glass-card" style="overflow: hidden;">
+                    <div class="skeleton" style="height: 180px;"></div>
+                    <div style="padding: 1rem;">
+                        <div class="skeleton" style="height: 1.2rem; margin-bottom: 0.5rem; border-radius: 4px;"></div>
+                        <div class="skeleton" style="height: 1rem; width: 60%; margin-bottom: 0.75rem; border-radius: 4px;"></div>
+                        <div class="skeleton" style="height: 2rem; border-radius: 8px;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Error Message -->
+            <div id="errorMessage" class="glass" style="padding: 2rem; text-align: center; display: none; margin-bottom: 2rem;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--error); margin-bottom: 1rem;"></i>
+                <h3 style="margin-bottom: 0.5rem;">Error Loading Products</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Something went wrong. Please try again.</p>
+                <button id="retryBtn" class="btn btn-primary">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+            
+            <!-- Products Grid -->
+            <div id="productsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+                {% if products %}
+                {% for product in products %}
+                <div class="glass-card product-card fade-in" style="overflow: hidden;">
+                    <div style="height: 180px; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; position: relative;">
+                        {% if product.images and product.images[0] %}
+                        <img src="{{ product.images[0] }}" alt="{{ product.name }}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        <img src="/uploads/products/mango_pickle.jpg" alt="Authentic Pickle" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                        {% if product.discount_percentage %}
+                        <span class="badge badge-danger" style="position: absolute; top: 10px; right: 10px;">{{ product.discount_percentage }}% OFF</span>
+                        {% endif %}
+                        {% if product.stock > 0 %}
+                        <span class="badge badge-success" style="position: absolute; top: 10px; left: 10px;">In Stock</span>
+                        {% else %}
+                        <span class="badge badge-danger" style="position: absolute; top: 10px; left: 10px;">Out of Stock</span>
+                        {% endif %}
+                        <button class="btn btn-secondary quick-view-btn" data-product-id="{{ product.id }}" style="position: absolute; bottom: 10px; right: 10px; padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div style="padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                            <span style="color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase;">{{ product.category_name or 'Pickle' }}</span>
+                            {% set is_nv = 'chicken' in product.name.lower() or 'fish' in product.name.lower() or 'prawn' in product.name.lower() or 'mutton' in product.name.lower() %}
+                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1.5px solid {% if is_nv %}#e74c3c{% else %}#2ecc71{% endif %}; padding: 1px; border-radius: 3px;" title="{% if is_nv %}Non-Vegetarian{% else %}100% Pure Vegetarian{% endif %}">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: {% if is_nv %}#e74c3c{% else %}#2ecc71{% endif %};"></span>
+                            </span>
+                        </div>
+                        <h3 style="font-size: 1rem; margin-bottom: 0.25rem;">{{ product.name }}</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">{{ product.category_name or 'Category' }}</p>
+                        {% if product.weight %}
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">{{ product.weight }}</p>
+                        {% endif %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <div>
+                                <span style="font-size: 1.1rem; font-weight: 700; color: var(--accent);">₹{{ product.price }}</span>
+                                {% if product.original_price %}
+                                <span style="text-decoration: line-through; color: var(--text-secondary); margin-left: 0.5rem; font-size: 0.9rem;">₹{{ product.original_price }}</span>
+                                {% endif %}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.25rem; color: var(--warning); font-size: 0.9rem;">
+                                <i class="fas fa-star"></i>
+                                <span>{{ product.rating }}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            {% if current_user.is_authenticated %}
+                            <form method="POST" action="{{ url_for('cart.add') }}" style="flex: 1;">
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 0.85rem;" {% if not product.stock %}disabled{% endif %}>
+                                    <i class="fas fa-shopping-cart"></i> Add
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('products.toggle_wishlist', product_id=product.id) }}">
+                                <button type="submit" class="btn btn-secondary" style="padding: 0.5rem;">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </form>
+                            {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-primary" style="flex: 1; justify-content: center; font-size: 0.85rem;">
+                                <i class="fas fa-shopping-cart"></i> Add
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="glass" style="padding: 3rem; text-align: center; grid-column: 1 / -1;">
+                    <i class="fas fa-search" style="font-size: 4rem; color: var(--accent); opacity: 0.3; margin-bottom: 1rem;"></i>
+                    <h3 style="margin-bottom: 0.5rem;">No products found</h3>
+                    <p style="color: var(--text-secondary);">Try adjusting your search or filters</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if total > per_page %}
+            <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem; flex-wrap: wrap;">
+                {% if page > 1 %}
+                <a href="{{ url_for('main.search', q=query, page=page-1, sort=request.args.get('sort'), **filters) }}" class="btn btn-secondary">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+                
+                {% for p in range(max(1, page-2), min(page+3, (total // per_page) + 2)) %}
+                {% if p == page %}
+                <span class="btn btn-secondary" style="background: var(--accent); color: white;">{{ p }}</span>
+                {% else %}
+                <a href="{{ url_for('main.search', q=query, page=p, sort=request.args.get('sort'), **filters) }}" class="btn btn-secondary">{{ p }}</a>
+                {% endif %}
+                {% endfor %}
+                
+                {% if (page * per_page) < total %}
+                <a href="{{ url_for('main.search', q=query, page=page+1, sort=request.args.get('sort'), **filters) }}" class="btn btn-secondary">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Live search with debounce
+let searchTimeout;
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const loadingSkeleton = document.getElementById('loadingSkeleton');
+const productsGrid = document.getElementById('productsGrid');
+const errorMessage = document.getElementById('errorMessage');
+const retryBtn = document.getElementById('retryBtn');
+const sortSelect = document.getElementById('sortSelect');
+const mobileFilterBtn = document.getElementById('mobileFilterBtn');
+const filtersSidebar = document.querySelector('.filters-sidebar');
+const closeFilters = document.getElementById('closeFilters');
+
+// Mobile filter toggle
+if (mobileFilterBtn && filtersSidebar) {
+    mobileFilterBtn.style.display = 'flex';
+    mobileFilterBtn.addEventListener('click', () => {
+        filtersSidebar.classList.add('active');
+        closeFilters.style.display = 'block';
+    });
+}
+
+if (closeFilters) {
+    closeFilters.addEventListener('click', () => {
+        filtersSidebar.classList.remove('active');
+        closeFilters.style.display = 'none';
+    });
+}
+
+// Live search
+searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        performSearch(e.target.value);
+    }, 500);
+});
+
+searchBtn.addEventListener('click', () => {
+    performSearch(searchInput.value);
+});
+
+function performSearch(query) {
+    const url = new URL(window.location);
+    url.searchParams.set('q', query);
+    window.location.href = url.toString();
+}
+
+// Sort change
+sortSelect.addEventListener('change', (e) => {
+    const url = new URL(window.location);
+    url.searchParams.set('sort', e.target.value);
+    window.location.href = url.toString();
+});
+
+// Retry on error
+retryBtn.addEventListener('click', () => {
+    errorMessage.style.display = 'none';
+    loadingSkeleton.style.display = 'grid';
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+});
+
+// Show loading skeleton on filter changes
+document.querySelectorAll('#filterForm select, #filterForm input').forEach(el => {
+    el.addEventListener('change', () => {
+        loadingSkeleton.style.display = 'grid';
+        productsGrid.style.display = 'none';
+    });
+});
+
+// Check for mobile view
+function checkMobile() {
+    if (window.innerWidth <= 768) {
+        mobileFilterBtn.style.display = 'flex';
+    } else {
+        mobileFilterBtn.style.display = 'none';
+        filtersSidebar.classList.remove('active');
+        closeFilters.style.display = 'none';
+    }
+}
+
+window.addEventListener('resize', checkMobile);
+checkMobile();
+
+// Quick view button handlers
+document.querySelectorAll('.quick-view-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const productId = this.getAttribute('data-product-id');
+        window.location.href = '/products/' + productId;
+    });
+});
+</script>
+{% endblock %}

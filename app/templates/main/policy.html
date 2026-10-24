@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+    <div class="glass" style="padding: 3rem; border-radius: 16px;">
+        <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 1.5rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            {{ title }}
+        </h1>
+        
+        {% if policy_type == 'shipping' %}
+        <div style="color: var(--text-secondary); line-height: 1.8; font-size: 0.95rem;">
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">1. Pan-India Delivery Network</h2>
+            <p>PickleHub ships fresh, artisanal pickles across 19,000+ PIN codes in India through our premier logistics partners including Delhivery, BlueDart, DTDC, and India Post Speed Post.</p>
+
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">2. Free Shipping Guarantee</h2>
+            <p>All standard delivery orders on PickleHub come with <strong>100% FREE Delivery</strong>. No hidden courier charges or minimum weight penalties.</p>
+
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">3. Leak-Proof 4-Layer Packaging</h2>
+            <p>Traditional oil-cured pickles require specialized care. Every glass or ceramic-safe food grade jar is heat-induction sealed, bubble-cushioned in an impact-resistant corrugated container, and vacuum shrink-wrapped to guarantee zero leakage.</p>
+
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">4. Dispatch & Delivery Timelines</h2>
+            <p>Orders are dispatched by our home-maker kitchens within 24–48 hours of order confirmation. Metro city deliveries arrive in 2–4 business days; tier-2/3 cities arrive in 4–6 business days.</p>
+        </div>
+        {% elif policy_type == 'refund' %}
+        <div style="color: var(--text-secondary); line-height: 1.8; font-size: 0.95rem;">
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">1. 100% Taste & Freshness Guarantee</h2>
+            <p>At PickleHub, our top commitment is authentic regional taste and pristine hygiene. If your pickle jar arrives damaged, unsealed, or compromised in any way, we offer a hassle-free, no-questions-asked <strong>free replacement jar or 100% full refund</strong> within 7 days of delivery.</p>
+
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">2. How to Claim a Refund or Replacement</h2>
+            <p>Simply navigate to your <a href="{{ url_for('orders.list') }}" style="color: var(--accent); font-weight: 600;">My Orders</a> page, click on your order, and reach out via our 1-click Contact Support or email <strong>support@picklehub.com</strong> with a photo of the damaged jar. Our team resolves claims within 24 hours.</p>
+
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">3. Instant UPI / Bank Reversals</h2>
+            <p>Approved refunds are processed instantly and credited back to your original source (UPI, Debit/Credit Card, or NetBanking) within 2 to 4 business days.</p>
+        </div>
+        {% else %}
+        <div style="color: var(--text-secondary); line-height: 1.8; font-size: 0.95rem;">
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">1. Customer Data Privacy</h2>
+            <p>We respect your privacy. Your personal information, delivery addresses, and contact numbers are encrypted and strictly used for order processing and delivery logistics. We never sell your personal data to third parties.</p>
+
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">2. Secure PCI-DSS Encrypted Payments</h2>
+            <p>All online transactions are processed through 256-bit SSL encrypted PCI-DSS certified payment gateways. PickleHub does not store your debit/credit card numbers or UPI PINs.</p>
+
+            <h2 style="color: var(--text-primary); font-size: 1.3rem; margin: 1.5rem 0 0.5rem 0;">3. Account Control</h2>
+            <p>You can update your personal contact info, saved addresses, or delete your profile information anytime through your account dashboard.</p>
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <a href="{{ url_for('products.list_products') }}" class="btn btn-primary">
+                <i class="fas fa-shopping-bag"></i> Browse Authentic Pickles
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

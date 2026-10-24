@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Product - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="glass" style="max-width: 800px; margin: 2rem auto; padding: 2.5rem;">
+        <h1 style="font-size: 2rem; margin-bottom: 2rem; text-align: center;">
+            <i class="fas fa-edit"></i> Edit Product
+        </h1>
+        
+        <form method="POST" action="{{ url_for('seller.edit_product', product_id=product.id) }}">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Product Name *</label>
+                        <input type="text" name="name" value="{{ product.name }}" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Category *</label>
+                        <select name="category_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category.id == product.category_id %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Price (₹) *</label>
+                        <input type="number" name="price" step="0.01" value="{{ product.price }}" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Stock Quantity *</label>
+                        <input type="number" name="stock" value="{{ product.stock }}" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Status</label>
+                        <select name="status" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                            <option value="active" {% if product.status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if product.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                            <option value="out_of_stock" {% if product.status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Description *</label>
+                        <textarea name="description" rows="4" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;">{{ product.description }}</textarea>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Ingredients</label>
+                        <input type="text" name="ingredients" value="{{ product.ingredients or '' }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Spice Level</label>
+                        <select name="spice_level" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                            <option value="">Select spice level</option>
+                            <option value="mild" {% if product.spice_level == 'mild' %}selected{% endif %}>Mild</option>
+                            <option value="medium" {% if product.spice_level == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="spicy" {% if product.spice_level == 'spicy' %}selected{% endif %}>Spicy</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Shelf Life</label>
+                        <input type="text" name="shelf_life" value="{{ product.shelf_life or '' }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Weight</label>
+                        <input type="text" name="weight" value="{{ product.weight or '' }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="justify-content: center;">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{{ url_for('seller.products') }}" class="btn btn-secondary" style="justify-content: center;">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

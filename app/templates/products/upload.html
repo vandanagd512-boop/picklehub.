@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Product - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="glass" style="max-width: 800px; margin: 2rem auto; padding: 2.5rem;">
+        <h1 style="font-size: 2rem; margin-bottom: 2rem; text-align: center;">
+            <i class="fas fa-upload"></i> Upload New Product
+        </h1>
+        
+        <form method="POST" action="{{ url_for('products.upload') }}" enctype="multipart/form-data">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Product Name *</label>
+                        <input type="text" name="name" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);" placeholder="Enter product name">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Category *</label>
+                        <select name="category_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                            <option value="">Select Category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Price (₹) *</label>
+                        <input type="number" name="price" step="0.01" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);" placeholder="Enter price">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Original Price (₹)</label>
+                        <input type="number" name="original_price" step="0.01" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);" placeholder="Enter original price (for discount)">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Stock Quantity *</label>
+                        <input type="number" name="stock" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);" placeholder="Enter available quantity">
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Description *</label>
+                        <textarea name="description" rows="4" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;" placeholder="Describe your product..."></textarea>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Ingredients</label>
+                        <input type="text" name="ingredients" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);" placeholder="List main ingredients">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Spice Level</label>
+                        <select name="spice_level" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                            <option value="">Select spice level</option>
+                            <option value="mild">Mild</option>
+                            <option value="medium">Medium</option>
+                            <option value="spicy">Spicy</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Shelf Life</label>
+                        <input type="text" name="shelf_life" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);" placeholder="e.g., 6 months, 1 year">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Weight</label>
+                        <input type="text" name="weight" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);" placeholder="e.g., 500g, 1kg">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Product Images</label>
+                <input type="file" name="images" multiple accept="image/*" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary);">
+                <small style="color: var(--text-secondary);">Upload multiple images (PNG, JPG, JPEG, GIF, WEBP)</small>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button type="submit" class="btn btn-primary" style="justify-content: center;">
+                    <i class="fas fa-upload"></i> Upload Product
+                </button>
+                <a href="{{ url_for('seller.products') }}" class="btn btn-secondary" style="justify-content: center;">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

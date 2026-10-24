@@ -1,0 +1,1560 @@
+{% extends "base.html" %}
+
+{% block title %}All Products – PickleHub{% endblock %}
+{% block description %}Browse our full collection of authentic homemade pickles{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Page layout ─────────────────────────────────────────── */
+.products-page {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+}
+
+.page-header p { color: var(--text-secondary); }
+
+.products-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* ── Sidebar / Filters ────────────────────────────────────── */
+.filters-sidebar {
+    position: sticky;
+    top: 100px;
+    padding: 1.5rem;
+    border-radius: 16px;
+}
+
+.filter-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.filter-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+.filter-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filter-select,
+.filter-input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+    appearance: none;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(225, 112, 85, 0.15);
+}
+
+.price-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.price-row span { color: var(--text-secondary); font-size: 0.85rem; }
+
+.rating-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.rating-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.35rem 0;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+
+.rating-option:hover { color: var(--accent); }
+
+.rating-option input { accent-color: var(--accent); }
+
+.stars-display { color: var(--warning); font-size: 0.8rem; }
+
+/* ── Spice chips ──────────────────────────────────────────── */
+.spice-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.spice-chip {
+    padding: 0.3rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.spice-chip:hover,
+.spice-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+/* ── Category pills ───────────────────────────────────────── */
+.category-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 260px; overflow-y: auto; }
+
+.category-pill {
+    padding: 0.45rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    background: none;
+    text-align: left;
+    width: 100%;
+}
+
+.category-pill:hover,
+.category-pill.active {
+    background: rgba(225, 112, 85, 0.12);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.category-pill i { font-size: 0.75rem; }
+
+/* ── Main area – toolbar ─────────────────────────────────── */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+}
+
+.search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+}
+
+.search-wrap i {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.65rem 1rem 0.65rem 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(225, 112, 85, 0.15);
+}
+
+.sort-select {
+    padding: 0.65rem 2rem 0.65rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23636e72' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    min-width: 175px;
+}
+
+.results-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.active-filters-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.65rem;
+    background: rgba(225, 112, 85, 0.12);
+    color: var(--accent);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.filter-tag button {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.filter-tag button:hover { opacity: 1; }
+
+/* ── Mobile filter toggle ─────────────────────────────────── */
+.mobile-filter-toggle {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ── Grid ────────────────────────────────────────────────── */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ── Product Card ─────────────────────────────────────────── */
+.product-card {
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    animation: cardFadeIn 0.4s ease both;
+}
+
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px var(--shadow);
+}
+
+@keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.card-image-wrap {
+    position: relative;
+    height: 200px;
+    background: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.card-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.product-card:hover .card-image-wrap img {
+    transform: scale(1.06);
+}
+
+.card-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-image-placeholder i {
+    font-size: 4rem;
+    color: var(--accent);
+    opacity: 0.2;
+}
+
+/* badges */
+.badge-discount {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--error);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 2;
+}
+
+.badge-stock {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    z-index: 2;
+}
+
+.badge-in-stock  { background: var(--success); color: white; }
+.badge-out-stock { background: #b2bec3; color: white; }
+.badge-featured  {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--warning);
+    color: #2d3436;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    z-index: 2;
+}
+
+/* hover action bar */
+.card-actions-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.6rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.product-card:hover .card-actions-overlay {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.btn-wishlist {
+    background: white;
+    color: #b2bec3;
+}
+
+.btn-wishlist.active,
+.btn-wishlist:hover {
+    background: #ff7675;
+    color: white;
+}
+
+.btn-quickview {
+    background: white;
+    color: var(--accent);
+}
+
+.btn-quickview:hover {
+    background: var(--accent);
+    color: white;
+}
+
+/* card body */
+.card-body {
+    padding: 1rem 1rem 1.25rem;
+}
+
+.card-category {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.3rem;
+}
+
+.card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.card-weight {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.card-spice {
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.spice-low    { color: #27ae60; }
+.spice-medium { color: var(--warning); }
+.spice-high   { color: var(--error); }
+
+.card-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.6rem;
+}
+
+.stars {
+    display: inline-flex;
+    gap: 1px;
+    font-size: 0.75rem;
+    color: #dfe6e9;
+}
+
+.stars .filled { color: var(--warning); }
+
+.rating-value {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.rating-count {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.card-pricing {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.price-current {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.price-original {
+    font-size: 0.85rem;
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.card-footer {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-cart {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--gradient);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-cart:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(225, 112, 85, 0.35);
+}
+
+.btn-cart:disabled {
+    background: #b2bec3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-cart-login {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-cart-login:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.btn-wishlist-card {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-wishlist-card.wishlisted,
+.btn-wishlist-card:hover {
+    background: #ff7675;
+    border-color: #ff7675;
+    color: white;
+}
+
+/* ── Skeleton loaders ─────────────────────────────────────── */
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+.skeleton-card {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.skeleton-img {
+    height: 200px;
+}
+
+.skeleton-body { padding: 1rem; }
+
+.skeleton-line {
+    border-radius: 4px;
+    margin-bottom: 0.6rem;
+}
+
+.skeleton {
+    background: linear-gradient(90deg,
+        var(--bg-secondary) 25%,
+        var(--border) 50%,
+        var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite;
+}
+
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Empty / Error states ─────────────────────────────────── */
+.empty-state {
+    grid-column: 1 / -1;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: var(--accent);
+    opacity: 0.25;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+.empty-state p  { color: var(--text-secondary); }
+
+.error-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    border-radius: 14px;
+}
+
+.error-state i {
+    font-size: 3rem;
+    color: var(--error);
+    margin-bottom: 1rem;
+}
+
+/* ── Pagination ───────────────────────────────────────────── */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.page-btn:hover:not(.active):not(:disabled) {
+    background: rgba(225, 112, 85, 0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.page-btn.active {
+    background: var(--gradient);
+    border-color: transparent;
+    color: white;
+    font-weight: 700;
+    cursor: default;
+}
+
+.page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Quick-view modal ─────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-box {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    max-width: 680px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(24px) scale(0.97);
+    transition: transform 0.3s ease;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+}
+
+.modal-overlay.open .modal-box {
+    transform: translateY(0) scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.modal-close:hover { background: var(--error); color: white; border-color: var(--error); }
+
+.modal-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+
+.modal-img {
+    height: 300px;
+    background: var(--bg-primary);
+    overflow: hidden;
+    border-radius: 0 0 0 16px;
+}
+
+.modal-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal-details { padding: 1.5rem; }
+
+.modal-details .card-name  { font-size: 1.2rem; }
+.modal-details .card-rating{ margin: 0.5rem 0; }
+.modal-details .card-pricing{ margin: 0.6rem 0 1rem; }
+
+.modal-meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+}
+
+.modal-meta-row span { display: flex; align-items: center; gap: 0.4rem; }
+.modal-meta-row i   { color: var(--accent); width: 14px; }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .products-layout {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .products-page { padding: 1rem; }
+
+    .products-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-sidebar {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        border-radius: 0;
+        overflow-y: auto;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        top: 0;
+        max-width: 320px;
+    }
+
+    .filters-sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1999;
+        background: rgba(0,0,0,0.45);
+    }
+
+    .sidebar-backdrop.open { display: block; }
+
+    .mobile-filter-toggle { display: flex; }
+
+    .toolbar { flex-wrap: wrap; }
+
+    .sort-select { min-width: unset; flex: 1; }
+
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+        gap: 1rem;
+    }
+
+    .card-image-wrap { height: 160px; }
+
+    .modal-body { grid-template-columns: 1fr; }
+    .modal-img  { height: 220px; border-radius: 0; }
+}
+
+@media (max-width: 420px) {
+    .products-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sidebar backdrop (mobile) -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<div class="products-page">
+
+    <!-- Page header -->
+    <div class="page-header">
+        <h1><i class="fas fa-jar"></i> All Products</h1>
+        <p>Discover authentic homemade pickles from local artisans across India</p>
+    </div>
+
+    <div class="products-layout">
+
+        <!-- ── Filters Sidebar ─────────────────────────────────── -->
+        <aside class="glass filters-sidebar" id="filtersSidebar">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                <h3 style="font-weight:700; font-size:1rem;">Filter Products</h3>
+                <button id="closeSidebar" class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.8rem;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="filterForm">
+                <input type="hidden" id="hiddenQuery"     name="q"          value="{{ query }}">
+                <input type="hidden" id="hiddenSort"      name="sort"       value="{{ sort_by }}">
+                <input type="hidden" id="hiddenCategory"  name="category"   value="{{ filters.get('category_id','') }}">
+                <input type="hidden" id="hiddenSpice"     name="spice_level" value="{{ filters.get('spice_level','') }}">
+                <input type="hidden" id="hiddenMinRating" name="min_rating" value="{{ filters.get('min_rating','') }}">
+                <input type="hidden" id="hiddenMinPrice"  name="min_price"  value="{{ filters.get('min_price','') }}">
+                <input type="hidden" id="hiddenMaxPrice"  name="max_price"  value="{{ filters.get('max_price','') }}">
+
+                <!-- Category -->
+                <div class="filter-section">
+                    <span class="filter-label"><i class="fas fa-tag"></i> Category</span>
+                    <div class="category-list">
+                        <button type="button"
+                                class="category-pill {% if not filters.get('category_id') %}active{% endif %}"
+                                data-value="">
+                            <i class="fas fa-circle"></i> All Categories
+                        </button>
+                        {% for cat in categories %}
+                        <button type="button"
+                                class="category-pill {% if filters.get('category_id') == cat.id %}active{% endif %}"
+                                data-value="{{ cat.id }}">
+                            <i class="fas fa-jar"></i> {{ cat.name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Price -->
+                <div class="filter-section">
+                    <span class="filter-label"><i class="fas fa-rupee-sign"></i> Price Range</span>
+                    <div class="price-row">
+                        <input type="number" class="filter-input" id="priceMin"
+                               placeholder="₹ Min" min="0"
+                               value="{{ filters.get('min_price','') }}">
+                        <span>–</span>
+                        <input type="number" class="filter-input" id="priceMax"
+                               placeholder="₹ Max" min="0"
+                               value="{{ filters.get('max_price','') }}">
+                    </div>
+                </div>
+
+                <!-- Spice level -->
+                <div class="filter-section">
+                    <span class="filter-label"><i class="fas fa-pepper-hot"></i> Spice Level</span>
+                    <div class="spice-chips">
+                        <span class="spice-chip {% if not filters.get('spice_level') %}active{% endif %}" data-value="">All</span>
+                        <span class="spice-chip {% if filters.get('spice_level')=='low' %}active{% endif %}"    data-value="low">🟢 Mild</span>
+                        <span class="spice-chip {% if filters.get('spice_level')=='medium' %}active{% endif %}" data-value="medium">🟡 Medium</span>
+                        <span class="spice-chip {% if filters.get('spice_level')=='high' %}active{% endif %}"   data-value="high">🔴 Spicy</span>
+                    </div>
+                </div>
+
+                <!-- Rating -->
+                <div class="filter-section">
+                    <span class="filter-label"><i class="fas fa-star"></i> Minimum Rating</span>
+                    <div class="rating-options">
+                        {% for r, label in [(4,'4+ stars'), (3,'3+ stars'), (2,'2+ stars')] %}
+                        <label class="rating-option">
+                            <input type="radio" name="min_rating_radio"
+                                   value="{{ r }}"
+                                   {% if filters.get('min_rating')|string == r|string %}checked{% endif %}>
+                            <span class="stars-display">
+                                {% for i in range(r) %}<i class="fas fa-star"></i>{% endfor %}
+                                {% for i in range(5-r) %}<i class="far fa-star"></i>{% endfor %}
+                            </span>
+                            <span style="font-size:0.82rem; color:var(--text-secondary);">{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                        <label class="rating-option">
+                            <input type="radio" name="min_rating_radio" value=""
+                                   {% if not filters.get('min_rating') %}checked{% endif %}>
+                            <span style="font-size:0.82rem; color:var(--text-secondary);">Any rating</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:0.5rem;">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <a href="{{ url_for('products.list_products') }}" class="btn btn-secondary" style="width:100%; justify-content:center; text-decoration:none; display:flex;">
+                    <i class="fas fa-times"></i> Clear All
+                </a>
+            </form>
+        </aside>
+
+        <!-- ── Main content ────────────────────────────────────── -->
+        <div>
+
+            <!-- Toolbar -->
+            <div class="glass toolbar">
+                <!-- Mobile filter toggle -->
+                <button class="btn btn-secondary mobile-filter-toggle" id="openSidebar">
+                    <i class="fas fa-sliders-h"></i> Filters
+                    {% set active_count = filters|length - (1 if filters.get('sort_by') else 0) %}
+                    {% if active_count > 0 %}
+                    <span class="badge badge-primary" style="margin-left:0.25rem;">{{ active_count }}</span>
+                    {% endif %}
+                </button>
+
+                <!-- Search box -->
+                <div class="search-wrap">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="search-input" id="searchInput"
+                           placeholder="Search pickles…"
+                           value="{{ query }}"
+                           autocomplete="off">
+                </div>
+
+                <!-- Sort -->
+                <select class="sort-select" id="sortSelect">
+                    <option value="newest"     {% if sort_by=='newest'     %}selected{% endif %}>Newest</option>
+                    <option value="price_asc"  {% if sort_by=='price_asc'  %}selected{% endif %}>Price: Low → High</option>
+                    <option value="price_desc" {% if sort_by=='price_desc' %}selected{% endif %}>Price: High → Low</option>
+                    <option value="rating"     {% if sort_by=='rating'     %}selected{% endif %}>Top Rated</option>
+                    <option value="popularity" {% if sort_by=='popularity' %}selected{% endif %}>Most Popular</option>
+                </select>
+            </div>
+
+            <!-- Active filter tags -->
+            {% set ns = namespace(has_filter=false) %}
+            {% if filters.get('category_id') or filters.get('min_price') or filters.get('max_price') or filters.get('spice_level') or filters.get('min_rating') %}
+            {% set ns.has_filter = true %}
+            {% endif %}
+
+            {% if ns.has_filter %}
+            <div class="active-filters-bar" id="activeFilterBar">
+                {% if filters.get('category_id') %}
+                {% for cat in categories %}{% if cat.id == filters.get('category_id') %}
+                <span class="filter-tag">
+                    <i class="fas fa-tag"></i> {{ cat.name }}
+                    <button onclick="removeFilter('category')"><i class="fas fa-times"></i></button>
+                </span>
+                {% endif %}{% endfor %}
+                {% endif %}
+                {% if filters.get('spice_level') %}
+                <span class="filter-tag">
+                    <i class="fas fa-pepper-hot"></i>
+                    {{ {'low':'Mild','medium':'Medium','high':'Spicy'}.get(filters.get('spice_level'), filters.get('spice_level')) }}
+                    <button onclick="removeFilter('spice_level')"><i class="fas fa-times"></i></button>
+                </span>
+                {% endif %}
+                {% if filters.get('min_price') or filters.get('max_price') %}
+                <span class="filter-tag">
+                    <i class="fas fa-rupee-sign"></i>
+                    ₹{{ filters.get('min_price','0') }} – ₹{{ filters.get('max_price','∞') }}
+                    <button onclick="removeFilter('price')"><i class="fas fa-times"></i></button>
+                </span>
+                {% endif %}
+                {% if filters.get('min_rating') %}
+                <span class="filter-tag">
+                    <i class="fas fa-star"></i> {{ filters.get('min_rating') }}+ stars
+                    <button onclick="removeFilter('min_rating')"><i class="fas fa-times"></i></button>
+                </span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Results count -->
+            <div class="results-info">
+                <span id="resultsCount">
+                    {% if query %}
+                        {{ total }} result{% if total != 1 %}s{% endif %} for "<strong>{{ query }}</strong>"
+                    {% else %}
+                        Showing <strong>{{ products|length }}</strong> of <strong>{{ total }}</strong> products
+                    {% endif %}
+                </span>
+                {% if total_pages > 1 %}
+                <span>Page {{ page }} of {{ total_pages }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Loading skeletons (hidden by default, shown during AJAX/navigation) -->
+            <div id="skeletonGrid" class="skeleton-grid" style="display:none;">
+                {% for _ in range(12) %}
+                <div class="glass-card skeleton-card">
+                    <div class="skeleton-img skeleton"></div>
+                    <div class="skeleton-body">
+                        <div class="skeleton-line skeleton" style="height:0.75rem; width:40%; margin-bottom:0.5rem;"></div>
+                        <div class="skeleton-line skeleton" style="height:1rem; width:85%;"></div>
+                        <div class="skeleton-line skeleton" style="height:0.9rem; width:60%; margin-top:0.5rem;"></div>
+                        <div class="skeleton-line skeleton" style="height:1.1rem; width:50%; margin-top:0.75rem;"></div>
+                        <div class="skeleton-line skeleton" style="height:2.2rem; margin-top:0.9rem; border-radius:8px;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Error state -->
+            <div id="errorState" class="glass error-state" style="display:none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3 style="margin-bottom:0.5rem;">Something went wrong</h3>
+                <p style="color:var(--text-secondary); margin-bottom:1rem;">Could not load products. Please try again.</p>
+                <button class="btn btn-primary" onclick="location.reload()">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+
+            <!-- Products grid -->
+            <div id="productsGrid" class="products-grid">
+                {% if products %}
+                    {% for product in products %}
+                    {# ── Single product card ── #}
+                    <article class="glass-card product-card"
+                             data-id="{{ product.id }}"
+                             style="animation-delay: {{ loop.index0 * 0.05 }}s;">
+
+                        <!-- Image -->
+                        <div class="card-image-wrap">
+                            {% if product.images and product.images[0] %}
+                            <img src="{{ product.images[0] }}"
+                                 alt="{{ product.name }}"
+                                 loading="lazy"
+                                 onerror="this.parentElement.innerHTML='<div class=\'card-image-placeholder\'><i class=\'fas fa-jar\'></i></div>'">
+                            {% else %}
+                            <div class="card-image-placeholder">
+                                <i class="fas fa-jar"></i>
+                            </div>
+                            {% endif %}
+
+                            {# Stock / discount badges #}
+                            {% if product.discount_percentage %}
+                            <span class="badge-discount">{{ product.discount_percentage | round(0) | int }}% OFF</span>
+                            {% endif %}
+
+                            {% if product.is_featured and not product.discount_percentage %}
+                            <span class="badge-featured"><i class="fas fa-fire"></i> Featured</span>
+                            {% elif product.stock > 0 and not product.discount_percentage %}
+                            <span class="badge-stock badge-in-stock"><i class="fas fa-check"></i> In Stock</span>
+                            {% elif product.stock == 0 %}
+                            <span class="badge-stock badge-out-stock"><i class="fas fa-times"></i> Out of Stock</span>
+                            {% endif %}
+
+                            {# Hover action overlay #}
+                            <div class="card-actions-overlay">
+                                {% if current_user.is_authenticated %}
+                                <form method="POST" action="{{ url_for('products.toggle_wishlist', product_id=product.id) }}" style="display:contents;">
+                                    <button type="submit"
+                                            class="card-icon-btn btn-wishlist {% if product.id in wishlist_ids %}active{% endif %}"
+                                            title="{% if product.id in wishlist_ids %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+                                        <i class="{% if product.id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <a href="{{ url_for('auth.login') }}" class="card-icon-btn btn-wishlist" title="Login to wishlist">
+                                    <i class="far fa-heart"></i>
+                                </a>
+                                {% endif %}
+                                <button type="button"
+                                        class="card-icon-btn btn-quickview"
+                                        title="Quick View"
+                                        onclick="openQuickView('{{ product.id }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card body -->
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <div class="card-category" style="margin: 0;">
+                                    <i class="fas fa-tag"></i>
+                                    {{ product.category.name if product.category else (product.category_name or 'Pickle') }}
+                                </div>
+                                {% set is_nv = 'chicken' in product.name.lower() or 'fish' in product.name.lower() or 'prawn' in product.name.lower() or 'mutton' in product.name.lower() %}
+                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border: 1.5px solid {% if is_nv %}#e74c3c{% else %}#2ecc71{% endif %}; padding: 1.5px; border-radius: 3px;" title="{% if is_nv %}Non-Vegetarian{% else %}100% Pure Vegetarian{% endif %}">
+                                    <span style="width: 6px; height: 6px; border-radius: 50%; background: {% if is_nv %}#e74c3c{% else %}#2ecc71{% endif %};"></span>
+                                </span>
+                            </div>
+
+                            <h3 class="card-name">
+                                <a href="{{ url_for('products.detail', product_id=product.id) }}"
+                                   style="color:inherit; text-decoration:none;">{{ product.name }}</a>
+                            </h3>
+
+                            <div class="card-meta">
+                                {% if product.weight %}
+                                <span class="card-weight">
+                                    <i class="fas fa-weight-hanging"></i> {{ product.weight }}
+                                </span>
+                                {% endif %}
+                                {% if product.spice_level %}
+                                <span class="card-spice spice-{{ product.spice_level }}">
+                                    <i class="fas fa-pepper-hot"></i>
+                                    {{ {'low':'Mild','medium':'Medium','high':'Spicy'}.get(product.spice_level, product.spice_level) }}
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            {# Star rating #}
+                            <div class="card-rating">
+                                <span class="stars">
+                                    {% set full = product.rating | int %}
+                                    {% set half = (product.rating - full) >= 0.5 %}
+                                    {% for i in range(full) %}<i class="fas fa-star filled"></i>{% endfor %}
+                                    {% if half %}<i class="fas fa-star-half-alt filled"></i>{% set full = full + 1 %}{% endif %}
+                                    {% for i in range(5 - full) %}<i class="far fa-star"></i>{% endfor %}
+                                </span>
+                                <span class="rating-value">{{ "%.1f" | format(product.rating) }}</span>
+                                {% if product.review_count %}
+                                <span class="rating-count">({{ product.review_count }})</span>
+                                {% endif %}
+                            </div>
+
+                            {# Pricing #}
+                            <div class="card-pricing">
+                                <span class="price-current">₹{{ "%.0f" | format(product.price) }}</span>
+                                {% if product.original_price and product.original_price > product.price %}
+                                <span class="price-original">₹{{ "%.0f" | format(product.original_price) }}</span>
+                                {% endif %}
+                            </div>
+
+                            {# Actions #}
+                            <div class="card-footer" style="display: flex; gap: 0.4rem; align-items: center;">
+                                {% if current_user.is_authenticated %}
+                                    {% if product.stock > 0 %}
+                                    <a href="{{ url_for('cart.buy_now', product_id=product.id) }}" style="flex: 1; justify-content: center; text-decoration: none; padding: 0.55rem 0.4rem; background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; border-radius: 8px; font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;" title="1-Click Direct Purchase">
+                                        <i class="fas fa-bolt"></i> Buy Now
+                                    </a>
+                                    <form method="POST" action="{{ url_for('cart.add') }}" style="flex:1; display:contents;">
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <input type="hidden" name="quantity"   value="1">
+                                        <button type="submit" class="btn-cart" style="flex:1; padding: 0.55rem 0.4rem; font-size: 0.8rem;">
+                                            <i class="fas fa-shopping-cart"></i> Cart
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <button class="btn-cart" disabled style="flex: 1;">
+                                        <i class="fas fa-ban"></i> Out of Stock
+                                    </button>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('products.toggle_wishlist', product_id=product.id) }}" style="display:contents;">
+                                        <button type="submit"
+                                                class="btn-wishlist-card {% if product.id in wishlist_ids %}wishlisted{% endif %}"
+                                                title="{% if product.id in wishlist_ids %}Remove from wishlist{% else %}Save{% endif %}">
+                                            <i class="{% if product.id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                                        </button>
+                                    </form>
+                                {% else %}
+                                <a href="{{ url_for('auth.login') }}" class="btn-cart-login">
+                                    <i class="fas fa-sign-in-alt"></i> Login to Buy
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state glass">
+                        <i class="fas fa-search"></i>
+                        <h3>No products found</h3>
+                        <p>Try adjusting your search or removing some filters.</p>
+                        <a href="{{ url_for('products.list_products') }}" class="btn btn-primary" style="margin-top:1rem; display:inline-flex;">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav class="pagination" aria-label="Product pages">
+                {# Prev #}
+                {% if page > 1 %}
+                <a href="{{ url_for('products.list_products', q=query, page=page-1, sort=sort_by,
+                           category=filters.get('category_id',''),
+                           spice_level=filters.get('spice_level',''),
+                           min_rating=filters.get('min_rating',''),
+                           min_price=filters.get('min_price',''),
+                           max_price=filters.get('max_price','')) }}"
+                   class="page-btn" aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% else %}
+                <button class="page-btn" disabled aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                {% endif %}
+
+                {# Page numbers #}
+                {% set start_page = [1, page - 2] | max %}
+                {% set end_page   = [total_pages, page + 2] | min %}
+
+                {% if start_page > 1 %}
+                <a href="{{ url_for('products.list_products', q=query, page=1, sort=sort_by,
+                           category=filters.get('category_id',''),
+                           spice_level=filters.get('spice_level',''),
+                           min_rating=filters.get('min_rating',''),
+                           min_price=filters.get('min_price',''),
+                           max_price=filters.get('max_price','')) }}"
+                   class="page-btn">1</a>
+                {% if start_page > 2 %}
+                <span class="page-btn" style="cursor:default; border:none;">…</span>
+                {% endif %}
+                {% endif %}
+
+                {% for p in range(start_page, end_page + 1) %}
+                {% if p == page %}
+                <span class="page-btn active" aria-current="page">{{ p }}</span>
+                {% else %}
+                <a href="{{ url_for('products.list_products', q=query, page=p, sort=sort_by,
+                           category=filters.get('category_id',''),
+                           spice_level=filters.get('spice_level',''),
+                           min_rating=filters.get('min_rating',''),
+                           min_price=filters.get('min_price',''),
+                           max_price=filters.get('max_price','')) }}"
+                   class="page-btn">{{ p }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}
+                <span class="page-btn" style="cursor:default; border:none;">…</span>
+                {% endif %}
+                <a href="{{ url_for('products.list_products', q=query, page=total_pages, sort=sort_by,
+                           category=filters.get('category_id',''),
+                           spice_level=filters.get('spice_level',''),
+                           min_rating=filters.get('min_rating',''),
+                           min_price=filters.get('min_price',''),
+                           max_price=filters.get('max_price','')) }}"
+                   class="page-btn">{{ total_pages }}</a>
+                {% endif %}
+
+                {# Next #}
+                {% if page < total_pages %}
+                <a href="{{ url_for('products.list_products', q=query, page=page+1, sort=sort_by,
+                           category=filters.get('category_id',''),
+                           spice_level=filters.get('spice_level',''),
+                           min_rating=filters.get('min_rating',''),
+                           min_price=filters.get('min_price',''),
+                           max_price=filters.get('max_price','')) }}"
+                   class="page-btn" aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% else %}
+                <button class="page-btn" disabled aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                {% endif %}
+            </nav>
+            {% endif %}
+
+        </div>{# end main #}
+    </div>{# end products-layout #}
+</div>{# end products-page #}
+
+<!-- ── Quick-view modal ──────────────────────────────────────── -->
+<div class="modal-overlay" id="quickViewModal" role="dialog" aria-modal="true" aria-label="Quick View">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalTitle" style="font-size:1rem; font-weight:600;">Quick View</h3>
+            <button class="modal-close" id="closeModal" aria-label="Close modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="modalContent">
+            <!-- Filled by JS -->
+            <div style="padding:3rem; text-align:center; grid-column:1/-1;">
+                <div class="spinner" style="margin:0 auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function buildUrl(overrides = {}) {
+    const params = new URLSearchParams(window.location.search);
+    for (const [k, v] of Object.entries(overrides)) {
+        if (v === null || v === '') {
+            params.delete(k);
+        } else {
+            params.set(k, v);
+        }
+    }
+    return window.location.pathname + '?' + params.toString();
+}
+
+function navigate(overrides) {
+    document.getElementById('skeletonGrid').style.display = 'grid';
+    document.getElementById('productsGrid').style.display = 'none';
+    window.location.href = buildUrl(overrides);
+}
+
+// ── Mobile sidebar ──────────────────────────────────────────────────────────
+const sidebar  = document.getElementById('filtersSidebar');
+const backdrop = document.getElementById('sidebarBackdrop');
+const openBtn  = document.getElementById('openSidebar');
+const closeBtn = document.getElementById('closeSidebar');
+
+function openSidebar()  { sidebar.classList.add('sidebar-open');  backdrop.classList.add('open'); }
+function closeSidebar() { sidebar.classList.remove('sidebar-open'); backdrop.classList.remove('open'); }
+
+openBtn?.addEventListener('click',  openSidebar);
+closeBtn?.addEventListener('click', closeSidebar);
+backdrop?.addEventListener('click', closeSidebar);
+
+// ── Search with 450 ms debounce ─────────────────────────────────────────────
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        navigate({ q: this.value.trim(), page: 1 });
+    }, 450);
+});
+
+// ── Sort ─────────────────────────────────────────────────────────────────────
+document.getElementById('sortSelect').addEventListener('change', function () {
+    navigate({ sort: this.value, page: 1 });
+});
+
+// ── Category pills ───────────────────────────────────────────────────────────
+document.querySelectorAll('.category-pill').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('hiddenCategory').value = this.dataset.value;
+    });
+});
+
+// ── Spice chips ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.spice-chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+        document.querySelectorAll('.spice-chip').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('hiddenSpice').value = this.dataset.value;
+    });
+});
+
+// ── Rating radios ────────────────────────────────────────────────────────────
+document.querySelectorAll('input[name="min_rating_radio"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+        document.getElementById('hiddenMinRating').value = this.value;
+    });
+});
+
+// ── Price inputs (apply on blur/Enter) ──────────────────────────────────────
+const priceMin = document.getElementById('priceMin');
+const priceMax = document.getElementById('priceMax');
+
+function syncPrice() {
+    document.getElementById('hiddenMinPrice').value = priceMin.value;
+    document.getElementById('hiddenMaxPrice').value = priceMax.value;
+}
+
+priceMin.addEventListener('change', syncPrice);
+priceMax.addEventListener('change', syncPrice);
+
+// ── Filter form submit → build URL and navigate ──────────────────────────────
+document.getElementById('filterForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    syncPrice();
+
+    navigate({
+        q:           document.getElementById('hiddenQuery').value,
+        sort:        document.getElementById('hiddenSort').value,
+        category:    document.getElementById('hiddenCategory').value,
+        spice_level: document.getElementById('hiddenSpice').value,
+        min_rating:  document.getElementById('hiddenMinRating').value,
+        min_price:   document.getElementById('hiddenMinPrice').value,
+        max_price:   document.getElementById('hiddenMaxPrice').value,
+        page:        1,
+    });
+    closeSidebar();
+});
+
+// ── Remove individual filter tags ────────────────────────────────────────────
+function removeFilter(type) {
+    const overrides = { page: 1 };
+    if (type === 'category')    overrides.category    = null;
+    if (type === 'spice_level') overrides.spice_level = null;
+    if (type === 'min_rating')  overrides.min_rating  = null;
+    if (type === 'price')       { overrides.min_price = null; overrides.max_price = null; }
+    navigate(overrides);
+}
+
+// ── Quick view modal ─────────────────────────────────────────────────────────
+const modal       = document.getElementById('quickViewModal');
+const modalTitle  = document.getElementById('modalTitle');
+const modalContent= document.getElementById('modalContent');
+const closeModal  = document.getElementById('closeModal');
+
+function openQuickView(productId) {
+    // Find card data from the DOM
+    const card = document.querySelector(`.product-card[data-id="${productId}"]`);
+    if (!card) { window.location.href = '/products/' + productId; return; }
+
+    const name     = card.querySelector('.card-name a')?.textContent.trim()  || 'Product';
+    const imgEl    = card.querySelector('.card-image-wrap img');
+    const imgSrc   = imgEl ? imgEl.src : '';
+    const cat      = card.querySelector('.card-category')?.textContent.trim() || '';
+    const rating   = card.querySelector('.rating-value')?.textContent.trim()  || '0';
+    const revCount = card.querySelector('.rating-count')?.textContent.trim()  || '';
+    const price    = card.querySelector('.price-current')?.textContent.trim() || '';
+    const origPrice= card.querySelector('.price-original')?.textContent.trim()|| '';
+    const weight   = card.querySelector('.card-weight')?.textContent.trim()   || '';
+    const spice    = card.querySelector('.card-spice')?.textContent.trim()    || '';
+    const starsHTML= card.querySelector('.stars')?.outerHTML || '';
+
+    modalTitle.textContent = name;
+    modalContent.innerHTML = `
+        <div class="modal-img">
+            ${imgSrc
+                ? `<img src="${imgSrc}" alt="${name}">`
+                : `<div style="height:100%;display:flex;align-items:center;justify-content:center;"><i class="fas fa-jar" style="font-size:5rem;color:var(--accent);opacity:0.2;"></i></div>`}
+        </div>
+        <div class="modal-details">
+            <div class="card-category" style="margin-bottom:0.35rem;">${cat}</div>
+            <h3 class="card-name">${name}</h3>
+            <div class="card-rating">
+                ${starsHTML}
+                <span class="rating-value">${rating}</span>
+                <span class="rating-count">${revCount}</span>
+            </div>
+            <div class="card-pricing">
+                <span class="price-current">${price}</span>
+                ${origPrice ? `<span class="price-original">${origPrice}</span>` : ''}
+            </div>
+            <div class="modal-meta-row">
+                ${weight ? `<span><i class="fas fa-weight-hanging"></i> ${weight}</span>` : ''}
+                ${spice  ? `<span><i class="fas fa-pepper-hot"></i> ${spice}</span>`  : ''}
+            </div>
+            <a href="/products/${productId}" class="btn btn-primary" style="width:100%; justify-content:center; text-decoration:none; display:flex; margin-bottom:0.5rem;">
+                <i class="fas fa-eye"></i> View Full Details
+            </a>
+            <a href="/cart/buy-now/${productId}" class="btn btn-secondary" style="width:100%; justify-content:center; text-decoration:none; display:flex; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; font-weight: 700; border: none;">
+                <i class="fas fa-bolt"></i> ⚡ Buy Now (Direct)
+            </a>
+        </div>
+    `;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+closeModal.addEventListener('click', closeQuickView);
+modal.addEventListener('click', e => { if (e.target === modal) closeQuickView(); });
+
+function closeQuickView() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeQuickView();
+});
+
+// ── Show skeleton briefly while navigating ───────────────────────────────────
+window.addEventListener('pageshow', () => {
+    document.getElementById('skeletonGrid').style.display = 'none';
+    document.getElementById('productsGrid').style.display = 'grid';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Orders - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="font-size: 2rem; margin-bottom: 2rem;">
+        <i class="fas fa-shopping-bag"></i> Manage Orders
+    </h1>
+    
+    {% if orders %}
+    <div class="glass" style="padding: 1.5rem;">
+        {% for order in orders %}
+        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem; font-weight: 700;">
+                        <i class="fas fa-jar" style="color: var(--accent);"></i> {{ order.product_names_summary }}
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">(#{{ order.id[:8] }})</span>
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Placed: {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else 'Recently' }}</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <span class="badge badge-{{ 'success' if order.status == 'delivered' else 'warning' if order.status == 'pending' else 'primary' }}">
+                        {{ order.status|capitalize }}
+                    </span>
+                    <a href="{{ url_for('orders.detail', order_id=order.id) }}" target="_blank" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                        View Tracker
+                    </a>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; overflow-x: auto; align-items: center;">
+                {% for item in order.items[:4] %}
+                <div style="width: 55px; height: 55px; background: var(--bg-secondary); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid var(--border);" title="{{ item.product_name }}">
+                    {% if item.product and item.product.images and item.product.images[0] %}
+                    <img src="{{ item.product.images[0] }}" alt="{{ item.product_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <i class="fas fa-jar" style="font-size: 1.3rem; color: var(--accent); opacity: 0.4;"></i>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% if order.items|length > 4 %}
+                <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">+{{ order.items|length - 4 }} more</span>
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="color: var(--text-secondary);">{{ order.items|length }} item{{ 's' if order.items|length != 1 else '' }}</span>
+                </div>
+                <div style="font-weight: 700; color: var(--accent); font-size: 1.2rem;">
+                    ₹{{ order.total_amount }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if total > per_page %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+            {% if page > 1 %}
+            <a href="{{ url_for('admin.orders', page=page-1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="btn btn-secondary" style="background: var(--accent); color: white;">{{ page }}</span>
+            
+            {% if (page * per_page) < total %}
+            <a href="{{ url_for('admin.orders', page=page+1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 4rem; text-align: center;">
+        <i class="fas fa-shopping-bag" style="font-size: 5rem; color: var(--accent); opacity: 0.3; margin-bottom: 1.5rem;"></i>
+        <h2 style="margin-bottom: 0.5rem;">No orders yet</h2>
+        <p style="color: var(--text-secondary);">Orders will appear here once customers start purchasing.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

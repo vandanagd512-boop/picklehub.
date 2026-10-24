@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Seller Dashboard - PickleHub{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-alert-banner {
+    background: linear-gradient(135deg, rgba(230, 81, 0, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);
+}
+.pulse-bell {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #f59e0b;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    animation: ringBell 2s infinite;
+}
+@keyframes ringBell {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 2rem; margin: 0 0 0.25rem 0;">
+                <i class="fas fa-store" style="color: var(--accent);"></i> Seller Dashboard
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">
+                Overview of store performance, orders fulfillment, and inventory.
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('seller.orders') }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-shopping-bag"></i> Manage All Orders
+                {% if pending_count and pending_count > 0 %}
+                <span style="background: white; color: var(--accent); border-radius: 50px; padding: 0.15rem 0.5rem; font-size: 0.75rem; font-weight: 800;">
+                    {{ pending_count }}
+                </span>
+                {% endif %}
+            </a>
+        </div>
+    </div>
+    
+    <!-- Zomato Partner Incoming Orders Alert Banner -->
+    {% if pending_count and pending_count > 0 %}
+    <div class="dashboard-alert-banner">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="pulse-bell">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div>
+                <h3 style="margin: 0 0 0.25rem 0; font-size: 1.15rem; color: #f59e0b; font-weight: 800;">
+                    🔔 {{ pending_count }} New Order{{ 's' if pending_count > 1 else '' }} Awaiting Kitchen Acceptance!
+                </h3>
+                <p style="margin: 0; color: var(--text-primary); font-size: 0.9rem;">
+                    Customers have placed orders. Confirm immediately to begin artisanal packing.
+                </p>
+            </div>
+        </div>
+        <div>
+            <a href="{{ url_for('seller.orders', status='pending') }}" class="btn btn-primary" style="background: #f59e0b; border-color: #f59e0b; color: #000; font-weight: 700;">
+                <i class="fas fa-check-circle"></i> Review & Accept Orders
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+        <div class="glass-card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span style="color: var(--text-secondary);">Total Products</span>
+                <i class="fas fa-box" style="font-size: 1.5rem; color: var(--accent);"></i>
+            </div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--accent);">{{ total_products }}</div>
+        </div>
+        
+        <div class="glass-card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span style="color: var(--text-secondary);">Total Orders</span>
+                <i class="fas fa-shopping-bag" style="font-size: 1.5rem; color: var(--accent);"></i>
+            </div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--accent);">{{ total_orders }}</div>
+        </div>
+        
+        <div class="glass-card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span style="color: var(--text-secondary);">Total Revenue</span>
+                <i class="fas fa-rupee-sign" style="font-size: 1.5rem; color: var(--success);"></i>
+            </div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--success);">₹{{ "%.2f"|format(total_revenue) }}</div>
+        </div>
+        
+        <div class="glass-card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span style="color: var(--text-secondary);">Low Stock Alert</span>
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: var(--warning);"></i>
+            </div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--warning);">{{ low_stock|length }}</div>
+        </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Recent Orders -->
+        <div class="glass" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.35rem; margin: 0;">Recent Orders</h2>
+                <a href="{{ url_for('seller.orders') }}" style="color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 600;">
+                    View All Orders <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            {% if recent_orders %}
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for order in recent_orders %}
+                {% set st = order.status.value if order.status.value is defined else order.status|string %}
+                {% set st = st|lower %}
+                <div style="padding: 1.15rem; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); {% if st == 'pending' %}border-color: #f59e0b; background: rgba(245, 158, 11, 0.03);{% endif %}">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary);">
+                                    <i class="fas fa-jar" style="color: var(--accent);"></i> {{ order.product_names_summary }}
+                                </span>
+                                <span class="badge badge-{{ 'success' if st == 'delivered' else 'warning' if st == 'pending' else 'primary' }}">
+                                    {{ st|capitalize }}
+                                </span>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Order #{{ order.id[:8] }}</span>
+                        </div>
+                        <span style="font-weight: 700; color: var(--accent); font-size: 1.1rem;">
+                            ₹{{ "%.2f"|format(order.total_amount) }}
+                        </span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <span>{{ order.items|length }} item{{ 's' if order.items|length != 1 else '' }} • {{ order.payment_method|upper }}</span>
+                        <span>{{ order.created_at.strftime('%d %b, %I:%M %p') if order.created_at else 'Recently' }}</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.6rem; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 0.5rem;">
+                        <a href="{{ url_for('orders.detail', order_id=order.id) }}" target="_blank" style="font-size: 0.85rem; color: var(--text-secondary); text-decoration: none;">
+                            <i class="fas fa-eye"></i> View Live Tracker
+                        </a>
+                        
+                        <!-- 1-Click Action Shortcut right from dashboard -->
+                        <div>
+                            {% if st == 'pending' %}
+                            <form method="POST" action="{{ url_for('seller.accept_order', order_id=order.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-success" style="background: #22c55e; border-color: #22c55e; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 700;">
+                                    <i class="fas fa-check"></i> Accept Order
+                                </button>
+                            </form>
+                            {% elif st == 'confirmed' %}
+                            <form method="POST" action="{{ url_for('seller.pack_order', order_id=order.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-primary" style="background: #3b82f6; border-color: #3b82f6; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 600;">
+                                    <i class="fas fa-box"></i> Mark Packed
+                                </button>
+                            </form>
+                            {% elif st == 'processing' %}
+                            <form method="POST" action="{{ url_for('seller.dispatch_order', order_id=order.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-primary" style="background: #8b5cf6; border-color: #8b5cf6; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 700;">
+                                    <i class="fas fa-paper-plane"></i> Dispatch Now
+                                </button>
+                            </form>
+                            {% elif st == 'shipped' %}
+                            <form method="POST" action="{{ url_for('seller.deliver_order', order_id=order.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-success" style="background: #10b981; border-color: #10b981; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 700;">
+                                    <i class="fas fa-check-double"></i> Mark Delivered
+                                </button>
+                            </form>
+                            {% else %}
+                            <a href="{{ url_for('seller.orders') }}" class="btn btn-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+                                Manage
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No orders yet</p>
+            {% endif %}
+        </div>
+        
+        <!-- Quick Actions & Low Stock -->
+        <div>
+            <div class="glass" style="padding: 1.5rem; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.35rem; margin-bottom: 1.25rem;"><i class="fas fa-bolt" style="color: var(--accent);"></i> Quick Actions</h2>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="{{ url_for('seller.orders', status='pending') }}" class="btn btn-secondary" style="justify-content: center; background: rgba(245, 158, 11, 0.1); border-color: #f59e0b; color: #f59e0b; font-weight: 700;">
+                        <i class="fas fa-clock"></i> Pending Incoming Orders
+                    </a>
+                    <a href="{{ url_for('products.upload') }}" class="btn btn-primary" style="justify-content: center;">
+                        <i class="fas fa-plus"></i> Add New Product
+                    </a>
+                    <a href="{{ url_for('seller.products') }}" class="btn btn-secondary" style="justify-content: center;">
+                        <i class="fas fa-box"></i> Manage Products
+                    </a>
+                    <a href="{{ url_for('seller.orders') }}" class="btn btn-secondary" style="justify-content: center;">
+                        <i class="fas fa-shopping-bag"></i> View & Fulfill Orders
+                    </a>
+                    <a href="{{ url_for('products.list_products') }}" class="btn btn-secondary" style="justify-content: center;">
+                        <i class="fas fa-store"></i> View Live Marketplace
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Low Stock Alert -->
+            {% if low_stock %}
+            <div class="glass" style="padding: 1.5rem; border: 1px solid var(--warning);">
+                <h2 style="font-size: 1.25rem; margin-bottom: 1rem; color: var(--warning);">
+                    <i class="fas fa-exclamation-triangle"></i> Low Stock Alert
+                </h2>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    {% for product in low_stock %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                        <span style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ product.name }}</span>
+                        <span class="badge badge-warning" style="font-size: 0.75rem;">{{ product.stock }} left</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

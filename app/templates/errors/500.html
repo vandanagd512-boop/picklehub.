@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="glass" style="max-width: 500px; margin: 4rem auto; padding: 3rem; text-align: center;">
+        <div style="font-size: 6rem; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1rem;">
+            500
+        </div>
+        <h1 style="font-size: 2rem; margin-bottom: 1rem;">Server Error</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Something went wrong on our end. Please try again later.</p>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary" style="justify-content: center;">
+            <i class="fas fa-home"></i> Go Home
+        </a>
+    </div>
+</div>
+{% endblock %}

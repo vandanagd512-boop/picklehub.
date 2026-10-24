@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PickleHub - Premium Homemade Pickle Marketplace{% endblock %}</title>
+    <meta name="description" content="{% block description %}Discover authentic homemade pickles from local sellers across India{% endblock %}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Light Theme */
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.7);
+            --text-primary: #2d3436;
+            --text-secondary: #636e72;
+            --accent: #e17055;
+            --accent-light: #fab1a0;
+            --accent-dark: #d63031;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --error: #d63031;
+            --border: rgba(0, 0, 0, 0.1);
+            --shadow: rgba(0, 0, 0, 0.1);
+            --gradient: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+        }
+        
+        [data-theme="dark"] {
+            /* Dark Theme */
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-glass: rgba(22, 33, 62, 0.8);
+            --text-primary: #eaeaea;
+            --text-secondary: #a0a0a0;
+            --accent: #e17055;
+            --accent-light: #fab1a0;
+            --accent-dark: #ff7675;
+            --success: #55efc4;
+            --warning: #ffeaa7;
+            --error: #ff7675;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow: rgba(0, 0, 0, 0.3);
+            --gradient: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(225, 112, 85, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(214, 48, 49, 0.1) 0%, transparent 50%);
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+        
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+        
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 38px;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+        
+        .theme-toggle:hover {
+            background: var(--accent);
+            color: white;
+            transform: rotate(180deg);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(225, 112, 85, 0.4);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding-top: 118px;
+            min-height: calc(100vh - 200px);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .flash-message {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+        
+        .flash-success {
+            background: var(--success);
+        }
+        
+        .flash-error {
+            background: var(--error);
+        }
+        
+        .flash-warning {
+            background: var(--warning);
+            color: var(--text-primary);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+            margin-top: auto;
+        }
+        
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .footer-section h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        
+        .footer-section a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section a:hover {
+            color: var(--accent);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Badge */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .badge-primary {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .badge-warning {
+            background: var(--warning);
+            color: var(--text-primary);
+        }
+        
+        .badge-danger {
+            background: var(--error);
+            color: white;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Top Demo Role Switcher Bar -->
+    <div style="background: #0f172a; color: #fff; padding: 0.35rem 1.5rem; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.12); position: fixed; top: 0; left: 0; right: 0; z-index: 1002; height: 38px; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+            <span style="color: #f59e0b; font-weight: 700; font-size: 0.76rem; letter-spacing: 0.5px; text-transform: uppercase;">
+                <i class="fas fa-bolt"></i> 1-Click Role Switch:
+            </span>
+            <a href="{{ url_for('auth.demo_switch', role='customer') }}" style="text-decoration: none; padding: 0.18rem 0.65rem; border-radius: 4px; font-weight: 600; font-size: 0.75rem; transition: all 0.2s; background: {% if current_user.is_authenticated and current_user.role == 'customer' %}#e17055{% else %}rgba(255,255,255,0.08){% endif %}; color: #fff; border: 1px solid {% if current_user.is_authenticated and current_user.role == 'customer' %}#e17055{% else %}rgba(255,255,255,0.18){% endif %};" title="Login as Customer">
+                👤 Customer {% if current_user.is_authenticated and current_user.role == 'customer' %}✓{% endif %}
+            </a>
+            <a href="{{ url_for('auth.demo_switch', role='seller') }}" style="text-decoration: none; padding: 0.18rem 0.65rem; border-radius: 4px; font-weight: 600; font-size: 0.75rem; transition: all 0.2s; background: {% if current_user.is_authenticated and current_user.is_seller() %}#22c55e{% else %}rgba(255,255,255,0.08){% endif %}; color: #fff; border: 1px solid {% if current_user.is_authenticated and current_user.is_seller() %}#22c55e{% else %}rgba(255,255,255,0.18){% endif %};" title="Login as Seller (Merchant Kitchen)">
+                🏪 Seller (Pickle Kitchen) {% if current_user.is_authenticated and current_user.is_seller() %}✓{% endif %}
+            </a>
+            <a href="{{ url_for('auth.demo_switch', role='admin') }}" style="text-decoration: none; padding: 0.18rem 0.65rem; border-radius: 4px; font-weight: 600; font-size: 0.75rem; transition: all 0.2s; background: {% if current_user.is_authenticated and current_user.is_admin() %}#3b82f6{% else %}rgba(255,255,255,0.08){% endif %}; color: #fff; border: 1px solid {% if current_user.is_authenticated and current_user.is_admin() %}#3b82f6{% else %}rgba(255,255,255,0.18){% endif %};" title="Login as Admin">
+                🛡️ Admin {% if current_user.is_authenticated and current_user.is_admin() %}✓{% endif %}
+            </a>
+        </div>
+        <div style="font-size: 0.76rem; color: #94a3b8; display: flex; align-items: center; gap: 0.5rem;">
+            <span>Current: <strong style="color: #fff;">{% if current_user.is_authenticated %}{{ current_user.role|capitalize }} ({{ current_user.full_name.split()[0] }}){% else %}Guest (Not Logged In){% endif %}</strong></span>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('auth.logout') }}" style="color: #f87171; text-decoration: none; margin-left: 0.5rem;" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+       <div class="nav-container">
+            <a href="{{ url_for('main.index') }}" class="logo">
+                <i class="fas fa-jar"></i> PickleHub
+            </a>
+            
+            <ul class="nav-links">
+                <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                <li><a href="{{ url_for('products.list_products') }}">Products</a></li>
+                <li><a href="{{ url_for('main.search') }}">Search</a></li>
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('products.wishlist') }}"><i class="fas fa-heart" style="color: var(--accent);"></i> Wishlist</a></li>
+                    <li><a href="{{ url_for('cart.index') }}"><i class="fas fa-shopping-cart"></i> Cart <span class="badge badge-primary" id="cart-count">0</span></a></li>
+                    <li><a href="{{ url_for('orders.list') }}">Orders</a></li>
+                    {% if current_user.is_seller() %}
+                        <li><a href="{{ url_for('seller.dashboard') }}" style="color: var(--success); font-weight: 600;"><i class="fas fa-store"></i> Seller</a></li>
+                    {% endif %}
+                    {% if current_user.is_admin() %}
+                        <li><a href="{{ url_for('admin.dashboard') }}" style="color: #74b9ff; font-weight: 600;"><i class="fas fa-user-shield"></i> Admin</a></li>
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for('auth.profile') }}" style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ current_user.full_name.split()[0] if current_user.full_name else 'Profile' }}</span>
+                            <span class="badge {% if current_user.is_admin() %}badge-danger{% elif current_user.is_seller() %}badge-success{% else %}badge-primary{% endif %}" style="font-size: 0.7rem; padding: 0.15rem 0.45rem;">{{ current_user.role|capitalize }}</span>
+                        </a>
+                    </li>
+                    <li><a href="{{ url_for('auth.logout') }}" title="Logout" style="color: var(--text-secondary);"><i class="fas fa-sign-out-alt"></i></a></li>
+                {% else %}
+                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                    <li><a href="{{ url_for('auth.register') }}">Register</a></li>
+                {% endif %}
+            </ul>
+            
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>PickleHub</h3>
+                <p>Discover authentic homemade pickles from local sellers across India. Support local artisans and enjoy traditional flavors.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="{{ url_for('main.index') }}"><i class="fas fa-home" style="width: 18px;"></i> Home</a>
+                <a href="{{ url_for('products.list_products') }}"><i class="fas fa-jar" style="width: 18px;"></i> Explore All Pickles</a>
+                <a href="{{ url_for('main.search') }}"><i class="fas fa-search" style="width: 18px;"></i> Search Products</a>
+                <a href="{{ url_for('orders.list') }}"><i class="fas fa-box" style="width: 18px;"></i> Track Orders</a>
+                <a href="{{ url_for('cart.index') }}"><i class="fas fa-shopping-cart" style="width: 18px;"></i> My Cart</a>
+                <a href="{{ url_for('main.about') }}"><i class="fas fa-info-circle" style="width: 18px;"></i> About Us</a>
+                <a href="{{ url_for('main.contact') }}"><i class="fas fa-envelope" style="width: 18px;"></i> Contact Us</a>
+            </div>
+            <div class="footer-section">
+                <h3>Customer Service</h3>
+                <a href="{{ url_for('main.about') }}"><i class="fas fa-question-circle" style="width: 18px;"></i> About & FAQ</a>
+                <a href="{{ url_for('main.shipping_policy') }}"><i class="fas fa-shipping-fast" style="width: 18px;"></i> Shipping Policy</a>
+                <a href="{{ url_for('main.refund_policy') }}"><i class="fas fa-undo-alt" style="width: 18px;"></i> Returns & Refund Policy</a>
+                <a href="{{ url_for('main.privacy_policy') }}"><i class="fas fa-shield-alt" style="width: 18px;"></i> Privacy Policy</a>
+            </div>
+            <div class="footer-section">
+                <h3>Connect With Us</h3>
+                <a href="https://facebook.com" target="_blank" rel="noopener"><i class="fab fa-facebook" style="width: 18px;"></i> Facebook</a>
+                <a href="https://instagram.com" target="_blank" rel="noopener"><i class="fab fa-instagram" style="width: 18px;"></i> Instagram</a>
+                <a href="https://twitter.com" target="_blank" rel="noopener"><i class="fab fa-twitter" style="width: 18px;"></i> Twitter / X</a>
+                <a href="mailto:support@picklehub.com"><i class="fas fa-envelope" style="width: 18px;"></i> support@picklehub.com</a>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 2rem; color: var(--text-secondary);">
+            <p>&copy; 2026 PickleHub. All rights reserved. Authentic Homemade Indian Pickles.</p>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+        
+        // Auto-hide flash messages
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(message => {
+            setTimeout(() => {
+                message.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => message.remove(), 300);
+            }, 5000);
+        });
+        
+        // Update cart count
+        async function updateCartCount() {
+            try {
+                const response = await fetch('{{ url_for("cart.count") }}');
+                const data = await response.json();
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) {
+                    cartCount.textContent = data.count;
+                }
+            } catch (error) {
+                console.error('Error updating cart count:', error);
+            }
+        }
+        
+        // Update cart count on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartCount();
+        });
+        
+        {% block extra_js %}{% endblock %}
+    </script>
+</body>
+</html>

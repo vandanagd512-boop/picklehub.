@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Reviews - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="font-size: 2rem; margin-bottom: 2rem;">
+        <i class="fas fa-star"></i> Manage Reviews
+    </h1>
+    
+    {% if reviews %}
+    <div class="glass" style="padding: 1.5rem;">
+        {% for review in reviews %}
+        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: white;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <p style="font-weight: 600;">User ID: {{ review.user_id[:8] }}</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Product ID: {{ review.product_id[:8] }}</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.25rem; color: var(--warning);">
+                        {% for i in range(review.rating) %}
+                        <i class="fas fa-star"></i>
+                        {% endfor %}
+                    </div>
+                    <span class="badge badge-{{ 'success' if review.is_approved else 'warning' }}">
+                        {{ 'Approved' if review.is_approved else 'Pending' }}
+                    </span>
+                </div>
+            </div>
+            
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">{{ review.comment or 'No comment provided' }}</p>
+            
+            <div style="display: flex; gap: 0.5rem;">
+                {% if not review.is_approved %}
+                <form method="POST" action="{{ url_for('admin.approve_review', review_id=review.id) }}">
+                    <button type="submit" class="btn btn-success" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if total > per_page %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+            {% if page > 1 %}
+            <a href="{{ url_for('admin.reviews', page=page-1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="btn btn-secondary" style="background: var(--accent); color: white;">{{ page }}</span>
+            
+            {% if (page * per_page) < total %}
+            <a href="{{ url_for('admin.reviews', page=page+1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 4rem; text-align: center;">
+        <i class="fas fa-star" style="font-size: 5rem; color: var(--accent); opacity: 0.3; margin-bottom: 1.5rem;"></i>
+        <h2 style="margin-bottom: 0.5rem;">No reviews yet</h2>
+        <p style="color: var(--text-secondary);">Reviews will appear here once customers start reviewing products.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

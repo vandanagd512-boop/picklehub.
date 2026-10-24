@@ -1,0 +1,709 @@
+{% extends "base.html" %}
+
+{% block title %}Track Order #{{ order.id[:8] }} - PickleHub Live Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Zomato-Style Live Tracker Styling */
+.zomato-tracker-hero {
+    background: linear-gradient(135deg, rgba(230, 81, 0, 0.08) 0%, rgba(255, 179, 0, 0.05) 100%);
+    border: 1px solid rgba(230, 81, 0, 0.25);
+    border-radius: 18px;
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.live-beacon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 0.35rem 0.85rem;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.live-pulse-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #22c55e;
+    border-radius: 50%;
+    animation: livePulse 1.5s infinite;
+}
+
+@keyframes livePulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { transform: scale(1.2); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* 5-Step Stepper Bar */
+.stepper-container {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: 2.5rem 0 1.5rem;
+}
+
+.stepper-progress-line-bg {
+    position: absolute;
+    top: 24px;
+    left: 5%;
+    right: 5%;
+    height: 4px;
+    background: var(--border);
+    z-index: 1;
+}
+
+.stepper-progress-line-fill {
+    position: absolute;
+    top: 24px;
+    left: 5%;
+    height: 4px;
+    background: linear-gradient(90deg, #22c55e, #10b981);
+    z-index: 2;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step-node {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 18%;
+    text-align: center;
+}
+
+.step-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 3px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    transition: all 0.4s ease;
+    margin-bottom: 0.6rem;
+}
+
+.step-node.completed .step-icon-circle {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.35);
+}
+
+.step-node.active .step-icon-circle {
+    background: var(--accent);
+    border-color: #fff;
+    color: #fff;
+    box-shadow: 0 0 0 5px rgba(230, 81, 0, 0.3), 0 4px 15px rgba(230, 81, 0, 0.5);
+    animation: activeStepPulse 2s infinite;
+}
+
+@keyframes activeStepPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+.step-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    line-height: 1.25;
+    margin-bottom: 0.2rem;
+}
+
+.step-node.completed .step-title,
+.step-node.active .step-title {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.step-node.active .step-title {
+    color: var(--accent);
+}
+
+.step-time {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+/* Toast alert for live updates */
+.live-toast-alert {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #111827;
+    color: #ffffff;
+    border-left: 5px solid #22c55e;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transform: translateY(120px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.live-toast-alert.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .stepper-container {
+        flex-direction: column;
+        gap: 1.5rem;
+        padding-left: 2rem;
+    }
+    .stepper-progress-line-bg, .stepper-progress-line-fill {
+        top: 0;
+        bottom: 0;
+        left: 36px;
+        width: 3px;
+        height: 100%;
+    }
+    .step-node {
+        width: 100%;
+        flex-direction: row;
+        text-align: left;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem; flex-wrap: wrap;">
+                <h1 style="font-size: 1.8rem; margin: 0; font-weight: 800;">
+                    <i class="fas fa-jar" style="color: var(--accent);"></i> {{ order.product_names_summary }}
+                    <span style="font-size: 1.05rem; font-weight: 500; color: var(--text-secondary);">(Order #{{ order.id[:8] }})</span>
+                </h1>
+                <span class="live-beacon">
+                    <span class="live-pulse-dot"></span> Live Tracker
+                </span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                Placed on {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else 'Recently' }}
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+            <a href="{{ url_for('orders.list') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> My Orders
+            </a>
+            <a href="{{ url_for('orders.invoice', order_id=order.id) }}" target="_blank" class="btn btn-secondary">
+                <i class="fas fa-file-invoice"></i> Invoice
+            </a>
+        </div>
+    </div>
+    
+    <!-- Zomato-Style Live Tracking Hero Banner -->
+    {% set st = order.status.value if order.status.value is defined else order.status|string %}
+    {% set st = st|lower %}
+    
+    <div class="zomato-tracker-hero" id="trackerHero">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div style="flex: 1; min-width: 280px;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                    <span id="statusBadge" class="badge badge-{{ 'success' if st == 'delivered' else 'primary' if st in ['confirmed', 'processing', 'shipped'] else 'warning' }}" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                        {{ st|capitalize }}
+                    </span>
+                    <span style="color: var(--text-secondary); font-size: 0.82rem;" id="lastUpdatedText">
+                        Updated: {{ order.updated_at.strftime('%I:%M %p') if order.updated_at else 'Just now' }}
+                    </span>
+                </div>
+                
+                <h2 id="trackerTitle" style="font-size: 1.5rem; margin-bottom: 0.4rem; color: var(--text-primary); font-weight: 800;">
+                    {% if st == 'pending' %}
+                        <i class="fas fa-clock" style="color: #f59e0b;"></i> Waiting for Kitchen to Accept Order...
+                    {% elif st == 'confirmed' %}
+                        <i class="fas fa-concierge-bell" style="color: #22c55e;"></i> Order Accepted by Seller! Preparation Started
+                    {% elif st == 'processing' %}
+                        <i class="fas fa-box-open" style="color: #3b82f6;"></i> Freshly Packing in Airtight Martaban
+                    {% elif st == 'shipped' %}
+                        <i class="fas fa-shipping-fast" style="color: #8b5cf6;"></i> Out for Delivery / In Transit
+                    {% elif st == 'delivered' %}
+                        <i class="fas fa-check-circle" style="color: #10b981;"></i> Order Safely Delivered!
+                    {% elif st == 'cancelled' %}
+                        <i class="fas fa-times-circle" style="color: #ef4444;"></i> Order Cancelled
+                    {% else %}
+                        {{ st|capitalize }}
+                    {% endif %}
+                </h2>
+                
+                <p id="trackerSubtitle" style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin: 0; max-width: 650px;">
+                    {% if st == 'pending' %}
+                        We've sent your pickle order directly to the merchant kitchen. The seller usually reviews and accepts incoming orders within 1-2 minutes.
+                    {% elif st == 'confirmed' %}
+                        Grandma's Heritage Pickles kitchen has confirmed your order. The chef is selecting fresh hand-picked ingredients and traditional stone-ground spices.
+                    {% elif st == 'processing' %}
+                        Your pickles are being sealed in traditional food-grade ceramic Martaban jars topped with pure cold-pressed oil for maximum shelf-life.
+                    {% elif st == 'shipped' %}
+                        Handed over to our express courier partner. Real-time transit tracking is now live.
+                    {% elif st == 'delivered' %}
+                        Your authentic Indian homemade pickles have arrived. Relish the nostalgic flavours!
+                    {% elif st == 'cancelled' %}
+                        This order has been cancelled.
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Estimated Time Card (Dynamic Zomato/Swiggy Style) -->
+            <div style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; min-width: 220px; text-align: right;">
+                <span id="etaLabel" style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 0.25rem;">
+                    <i class="fas {{ eta_icon|default('fa-calendar-check') }}" style="color: {{ eta_color|default('var(--accent)') }};"></i> {{ eta_title|default('Estimated Delivery') }}
+                </span>
+                <div id="etaDate" style="font-size: 1.15rem; font-weight: 800; color: {{ eta_color|default('var(--accent)') }};">
+                    {{ eta_date|default('In 2-3 Business Days') }}
+                </div>
+                <span id="etaCourier" style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">
+                    {{ eta_subtext|default('Food-Grade Express Delivery') }}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Zomato 5-Step Visual Stepper -->
+        {% set stage_num = 1 if st == 'pending' else 2 if st == 'confirmed' else 3 if st == 'processing' else 4 if st == 'shipped' else 5 if st == 'delivered' else 0 %}
+        
+        <div class="stepper-container" id="stepperContainer">
+            <div class="stepper-progress-line-bg"></div>
+            <div class="stepper-progress-line-fill" id="stepperProgressFill" style="width: {{ 0 if stage_num <= 1 else 25 if stage_num == 2 else 50 if stage_num == 3 else 75 if stage_num == 4 else 90 }}%;"></div>
+            
+            <!-- Step 1: Placed -->
+            <div class="step-node {{ 'completed' if stage_num > 1 else 'active' if stage_num == 1 else '' }}" id="step1">
+                <div class="step-icon-circle">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="step-title">Order Placed</div>
+                <div class="step-time">{{ order.created_at.strftime('%I:%M %p') if order.created_at else 'Done' }}</div>
+            </div>
+            
+            <!-- Step 2: Confirmed -->
+            <div class="step-node {{ 'completed' if stage_num > 2 else 'active' if stage_num == 2 else '' }}" id="step2">
+                <div class="step-icon-circle">
+                    <i class="fas fa-concierge-bell"></i>
+                </div>
+                <div class="step-title">Kitchen Confirmed</div>
+                <div class="step-time" id="step2Time">
+                    {% if stage_num >= 2 %}Accepted{% else %}Waiting{% endif %}
+                </div>
+            </div>
+            
+            <!-- Step 3: Packing -->
+            <div class="step-node {{ 'completed' if stage_num > 3 else 'active' if stage_num == 3 else '' }}" id="step3">
+                <div class="step-icon-circle">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <div class="step-title">Freshly Packing</div>
+                <div class="step-time" id="step3Time">
+                    {% if stage_num >= 3 %}Packed{% else %}Pending{% endif %}
+                </div>
+            </div>
+            
+            <!-- Step 4: Dispatched -->
+            <div class="step-node {{ 'completed' if stage_num > 4 else 'active' if stage_num == 4 else '' }}" id="step4">
+                <div class="step-icon-circle">
+                    <i class="fas fa-motorcycle"></i>
+                </div>
+                <div class="step-title">Out for Delivery</div>
+                <div class="step-time" id="step4Time">
+                    {% if stage_num >= 4 %}In Transit{% else %}Upcoming{% endif %}
+                </div>
+            </div>
+            
+            <!-- Step 5: Delivered -->
+            <div class="step-node {{ 'completed' if stage_num == 5 else '' }}" id="step5">
+                <div class="step-icon-circle">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="step-title">Delivered</div>
+                <div class="step-time" id="step5Time">
+                    {% if stage_num == 5 %}Completed{% else %}Upcoming{% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Live Courier / Dispatch Info Box (Appears when shipped) -->
+        <div id="courierCard" style="display: {{ 'block' if st in ['shipped', 'delivered'] else 'none' }}; margin-top: 1.5rem; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1rem 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 40px; height: 40px; background: #3b82f6; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);" id="courierPartnerText">
+                            {{ courier_name if courier_name else 'Express Logistics Partner' }}
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                            AWB / Tracking ID: <span id="courierAwbText" style="font-family: monospace; font-weight: 700; color: var(--accent);">{{ tracking_awb if tracking_awb else 'AWB10029348' }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge badge-primary" style="font-size: 0.82rem;">
+                        <i class="fas fa-shield-alt"></i> Food-Grade Tempered Transit
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Details Layout -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Left Column: Items, Kitchen, and Address -->
+        <div>
+            <!-- Verified Kitchen / Artisan Info Card (Zomato Style) -->
+            <div class="glass" style="padding: 1.25rem 1.5rem; margin-bottom: 2rem; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 52px; height: 52px; background: rgba(230, 81, 0, 0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.6rem; border: 1px solid rgba(230, 81, 0, 0.3);">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <h3 style="font-size: 1.05rem; margin: 0; font-weight: 700;">Grandma's Heritage Kitchen</h3>
+                            <span class="badge badge-success" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">FSSAI Verified</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.2rem 0 0;">
+                            Lic: 10024042000123 • Traditional Small-Batch Sun-Dried Pickles
+                        </p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 700; color: #22c55e; font-size: 0.95rem;">
+                        <i class="fas fa-star"></i> 4.9 / 5.0
+                    </div>
+                    <span style="font-size: 0.78rem; color: var(--text-secondary);">Hygiene Audited</span>
+                </div>
+            </div>
+            
+            <!-- Order Items -->
+            <div class="glass" style="padding: 1.5rem; margin-bottom: 2rem; border-radius: 16px;">
+                <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">
+                    <i class="fas fa-shopping-basket" style="color: var(--accent);"></i> Pickles in this Order ({{ order.items|length }})
+                </h2>
+                {% for item in order.items %}
+                <div style="display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); align-items: center;">
+                    <div style="width: 70px; height: 70px; background: var(--bg-secondary); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid var(--border);">
+                        {% if item.product and item.product.images and item.product.images[0] %}
+                        <img src="{{ item.product.images[0] }}" alt="{{ item.product_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        <i class="fas fa-jar" style="font-size: 2rem; color: var(--accent); opacity: 0.5;"></i>
+                        {% endif %}
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary);">{{ item.product_name }}</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">
+                            Quantity: <strong>{{ item.quantity }}</strong> × ₹{{ "%.2f"|format(item.price) }}
+                        </p>
+                    </div>
+                    <div style="font-weight: 700; font-size: 1.15rem; color: var(--text-primary);">
+                        ₹{{ "%.2f"|format(item.price * item.quantity) }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Delivery Address -->
+            <div class="glass" style="padding: 1.5rem; border-radius: 16px;">
+                <h2 style="margin-bottom: 1rem; font-size: 1.25rem;">
+                    <i class="fas fa-map-marker-alt" style="color: var(--accent);"></i> Delivery Address
+                </h2>
+                {% if order.shipping_address %}
+                <p style="font-weight: 700; margin-bottom: 0.25rem; color: var(--text-primary); font-size: 1rem;">
+                    {{ order.shipping_address.full_name }}
+                </p>
+                <p style="color: var(--text-secondary); margin-bottom: 0.25rem;">{{ order.shipping_address.address_line1 }}</p>
+                {% if order.shipping_address.address_line2 %}
+                <p style="color: var(--text-secondary); margin-bottom: 0.25rem;">{{ order.shipping_address.address_line2 }}</p>
+                {% endif %}
+                <p style="color: var(--text-secondary); margin-bottom: 0.35rem;">
+                    {{ order.shipping_address.city }}, {{ order.shipping_address.state }} - {{ order.shipping_address.postal_code }}
+                </p>
+                <p style="color: var(--text-secondary); margin: 0;">
+                    <i class="fas fa-phone-alt"></i> Phone: <strong>{{ order.shipping_address.phone }}</strong>
+                </p>
+                {% else %}
+                <p style="color: var(--text-secondary);">Customer profile default address selected.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Right Column: Bill Details & Actions -->
+        <div>
+            <div class="glass" style="padding: 1.5rem; border-radius: 16px; position: sticky; top: 90px;">
+                <h2 style="margin-bottom: 1.25rem; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fas fa-receipt" style="color: var(--accent);"></i> Bill Details</span>
+                    <span class="badge badge-success" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; font-weight: 700;">Verified</span>
+                </h2>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                    <span style="color: var(--text-secondary);">Subtotal</span>
+                    <span>₹{{ "%.2f"|format(order.total_amount + (order.discount_amount or 0) - (order.shipping_cost or 0)) }}</span>
+                </div>
+                
+                {% if order.discount_amount and order.discount_amount > 0 %}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                    <span style="color: var(--text-secondary);">Coupon Discount {% if order.coupon_code %}({{ order.coupon_code }}){% endif %}</span>
+                    <span style="color: var(--success); font-weight: 600;">-₹{{ "%.2f"|format(order.discount_amount) }}</span>
+                </div>
+                {% endif %}
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                    <span style="color: var(--text-secondary);">Standard Delivery</span>
+                    <span style="color: var(--success); font-weight: 600;">{% if order.shipping_cost and order.shipping_cost > 0 %}₹{{ "%.2f"|format(order.shipping_cost) }}{% else %}FREE{% endif %}</span>
+                </div>
+                
+                <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 800;">
+                        <span>Total Paid / Due</span>
+                        <span style="color: var(--accent);">₹{{ "%.2f"|format(order.total_amount) }}</span>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-secondary); padding: 0.9rem; border-radius: 10px; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Payment Method</span>
+                        <span style="font-weight: 700; font-size: 0.9rem;">{{ order.payment_method|upper }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Payment Status</span>
+                        <span class="badge badge-{{ 'success' if order.payment_status == 'completed' else 'warning' }}" style="font-size: 0.75rem;">
+                            {{ order.payment_status|capitalize }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <a href="{{ url_for('orders.invoice', order_id=order.id) }}" target="_blank" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.92rem;">
+                        <i class="fas fa-file-invoice"></i> Download GST Tax Invoice
+                    </a>
+                </div>
+                
+                <!-- Cancel order section if allowed -->
+                {% if order.can_cancel() %}
+                <div id="cancelOrderSection" style="border-top: 1px solid var(--border); padding-top: 1.25rem;">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Need to cancel this order?</p>
+                    <form method="POST" action="{{ url_for('orders.cancel', order_id=order.id) }}" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                        <select name="cancel_reason" style="width: 100%; padding: 0.55rem; margin-bottom: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.85rem;">
+                            <option value="Ordered by mistake">Ordered by mistake</option>
+                            <option value="Changed delivery address">Changed delivery address</option>
+                            <option value="Want to change items/quantity">Want to change items/quantity</option>
+                            <option value="Delivery time too long">Delivery time too long</option>
+                            <option value="Other reason">Other reason</option>
+                        </select>
+                        <button type="submit" class="btn btn-danger" style="width: 100%; justify-content: center; font-size: 0.88rem; padding: 0.55rem;">
+                            <i class="fas fa-times-circle"></i> Cancel Order
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Notification Toast for Real-Time Status Changes -->
+<div id="liveToastAlert" class="live-toast-alert">
+    <div style="width: 38px; height: 38px; border-radius: 50%; background: #22c55e; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+        <i class="fas fa-bell"></i>
+    </div>
+    <div>
+        <div id="toastTitle" style="font-weight: 700; font-size: 0.95rem;">Order Update!</div>
+        <div id="toastMessage" style="font-size: 0.85rem; color: #d1d5db;">Seller has updated your order status.</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Zomato Real-Time Order Tracking Engine
+(function() {
+    const orderId = "{{ order.id }}";
+    let currentStatus = "{{ order.status.value if order.status.value is defined else order.status|string }}".toLowerCase();
+    
+    // Play a gentle notification chime using Web Audio API
+    function playNotificationSound() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+            osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
+            
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start();
+            osc.stop(ctx.currentTime + 0.45);
+        } catch (e) {
+            console.log('Audio autoplay blocked or unsupported:', e);
+        }
+    }
+    
+    function showToast(title, message) {
+        const toast = document.getElementById('liveToastAlert');
+        const titleEl = document.getElementById('toastTitle');
+        const msgEl = document.getElementById('toastMessage');
+        
+        if (toast && titleEl && msgEl) {
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 6000);
+        }
+    }
+    
+    function updateTrackerUI(data) {
+        const stage = data.stage; // 1 to 5
+        const status = data.status.toLowerCase();
+        
+        // Update header texts
+        const trackerTitle = document.getElementById('trackerTitle');
+        const trackerSubtitle = document.getElementById('trackerSubtitle');
+        const statusBadge = document.getElementById('statusBadge');
+        const lastUpdatedText = document.getElementById('lastUpdatedText');
+        
+        if (trackerTitle) trackerTitle.innerHTML = `<i class="fas ${stage === 1 ? 'fa-clock' : stage === 2 ? 'fa-concierge-bell' : stage === 3 ? 'fa-box-open' : stage === 4 ? 'fa-motorcycle' : 'fa-check-circle'}" style="color: ${stage === 1 ? '#f59e0b' : stage === 2 ? '#22c55e' : stage === 3 ? '#3b82f6' : stage === 4 ? '#8b5cf6' : '#10b981'};"></i> ${data.title}`;
+        if (trackerSubtitle) trackerSubtitle.textContent = data.subtitle;
+        if (lastUpdatedText && data.updated_at) lastUpdatedText.textContent = 'Updated: ' + data.updated_at;
+        
+        if (statusBadge) {
+            statusBadge.className = 'badge badge-' + (status === 'delivered' ? 'success' : (['confirmed', 'processing', 'shipped'].includes(status) ? 'primary' : (status === 'cancelled' ? 'danger' : 'warning')));
+            statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        }
+        
+        // Update Stepper Progress Line
+        const progressFill = document.getElementById('stepperProgressFill');
+        if (progressFill) {
+            const widths = { 1: 0, 2: 25, 3: 50, 4: 75, 5: 90 };
+            progressFill.style.width = (widths[stage] !== undefined ? widths[stage] : 0) + '%';
+        }
+        
+        // Update Steps 1 to 5
+        for (let i = 1; i <= 5; i++) {
+            const stepEl = document.getElementById('step' + i);
+            if (!stepEl) continue;
+            
+            stepEl.classList.remove('completed', 'active');
+            if (stage > i) {
+                stepEl.classList.add('completed');
+            } else if (stage === i) {
+                stepEl.classList.add('active');
+            }
+        }
+        
+        // Update Step Times
+        const step2Time = document.getElementById('step2Time');
+        const step3Time = document.getElementById('step3Time');
+        const step4Time = document.getElementById('step4Time');
+        const step5Time = document.getElementById('step5Time');
+        
+        if (step2Time) step2Time.textContent = stage >= 2 ? 'Accepted' : 'Waiting';
+        if (step3Time) step3Time.textContent = stage >= 3 ? 'Packed' : 'Pending';
+        if (step4Time) step4Time.textContent = stage >= 4 ? 'In Transit' : 'Upcoming';
+        if (step5Time) step5Time.textContent = stage === 5 ? 'Completed' : 'Upcoming';
+        
+        // Courier Card visibility
+        const courierCard = document.getElementById('courierCard');
+        if (courierCard) {
+            if (['shipped', 'delivered'].includes(status) && data.courier_name) {
+                courierCard.style.display = 'block';
+                const partnerEl = document.getElementById('courierPartnerText');
+                const awbEl = document.getElementById('courierAwbText');
+                if (partnerEl) partnerEl.textContent = data.courier_name + ' Express Logistics';
+                if (awbEl) awbEl.textContent = data.tracking_awb || 'BD98234123';
+            } else if (['shipped', 'delivered'].includes(status)) {
+                courierCard.style.display = 'block';
+            }
+        }
+        
+        // Dynamic ETA Card updates
+        const etaLabel = document.getElementById('etaLabel');
+        const etaDate = document.getElementById('etaDate');
+        const etaCourier = document.getElementById('etaCourier');
+
+        if (etaLabel && data.eta_title) {
+            etaLabel.innerHTML = `<i class="fas ${data.eta_icon || 'fa-calendar-check'}" style="color: ${data.eta_color || 'var(--accent)'};"></i> ${data.eta_title}`;
+        }
+        if (etaDate && data.estimated_delivery) {
+            etaDate.textContent = data.estimated_delivery;
+            if (data.eta_color) etaDate.style.color = data.eta_color;
+        }
+        if (etaCourier && data.eta_subtext) {
+            etaCourier.textContent = data.eta_subtext;
+        }
+
+        // Hide cancel button if order has progressed past confirmed
+        const cancelSection = document.getElementById('cancelOrderSection');
+        if (cancelSection && !data.can_cancel) {
+            cancelSection.style.display = 'none';
+        }
+    }
+    
+    // Live Auto-Poll Every 3.5 Seconds
+    async function pollLiveOrderStatus() {
+        // If order is completed or cancelled, slow down or stop polling
+        if (['delivered', 'cancelled'].includes(currentStatus)) {
+            return;
+        }
+        
+        try {
+            const res = await fetch(`/api/orders/${orderId}/live-status`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            
+            const data = await res.json();
+            if (data && data.success) {
+                const newStatus = data.status.toLowerCase();
+                
+                // Status changed!
+                if (newStatus !== currentStatus) {
+                    currentStatus = newStatus;
+                    playNotificationSound();
+                    showToast(
+                        '🎉 ' + data.title,
+                        data.subtitle || 'Your order status has progressed to ' + newStatus.toUpperCase()
+                    );
+                    updateTrackerUI(data);
+                }
+            }
+        } catch (err) {
+            console.log('Live tracking poll check:', err);
+        }
+    }
+    
+    // Start live auto-polling
+    setInterval(pollLiveOrderStatus, 3500);
+})();
+</script>
+{% endblock %}

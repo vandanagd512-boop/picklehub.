@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="glass" style="max-width: 900px; margin: 2rem auto; padding: 3rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 2rem; text-align: center; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+            About PickleHub
+        </h1>
+        
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Our Story</h2>
+            <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem;">
+                PickleHub was born from a simple idea: to connect pickle lovers with authentic homemade pickles from local artisans across India. We believe that traditional recipes passed down through generations deserve to be shared and celebrated.
+            </p>
+            <p style="color: var(--text-secondary); line-height: 1.8;">
+                Our platform empowers home-based pickle makers to showcase their craft and reach customers nationwide, while pickle enthusiasts can discover unique, authentic flavors they won't find in stores.
+            </p>
+        </div>
+        
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Our Mission</h2>
+            <ul style="color: var(--text-secondary); line-height: 2; list-style: none;">
+                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Support local artisans and small businesses</li>
+                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Preserve traditional pickle-making techniques</li>
+                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Provide customers with authentic, high-quality pickles</li>
+                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Create a sustainable marketplace for homemade products</li>
+            </ul>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+            <div class="glass-card" style="padding: 2rem; text-align: center;">
+                <div style="font-size: 3rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem;">500+</div>
+                <p style="color: var(--text-secondary);">Local Sellers</p>
+            </div>
+            <div class="glass-card" style="padding: 2rem; text-align: center;">
+                <div style="font-size: 3rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem;">2000+</div>
+                <p style="color: var(--text-secondary);">Products</p>
+            </div>
+            <div class="glass-card" style="padding: 2rem; text-align: center;">
+                <div style="font-size: 3rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem;">50K+</div>
+                <p style="color: var(--text-secondary);">Happy Customers</p>
+            </div>
+            <div class="glass-card" style="padding: 2rem; text-align: center;">
+                <div style="font-size: 3rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem;">28</div>
+                <p style="color: var(--text-secondary);">States Served</p>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Why Choose Us?</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 8px;">
+                    <h3 style="margin-bottom: 0.5rem;"><i class="fas fa-heart" style="color: var(--accent); margin-right: 0.5rem;"></i> Authentic Recipes</h3>
+                    <p style="color: var(--text-secondary);">All pickles are made using traditional recipes passed down through generations.</p>
+                </div>
+                <div style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 8px;">
+                    <h3 style="margin-bottom: 0.5rem;"><i class="fas fa-leaf" style="color: var(--accent); margin-right: 0.5rem;"></i> Natural Ingredients</h3>
+                    <p style="color: var(--text-secondary);">No artificial preservatives or colors. Just pure, natural ingredients.</p>
+                </div>
+                <div style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 8px;">
+                    <h3 style="margin-bottom: 0.5rem;"><i class="fas fa-users" style="color: var(--accent); margin-right: 0.5rem;"></i> Direct from Makers</h3>
+                    <p style="color: var(--text-secondary);">Buy directly from the artisans who make these delicious pickles.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 3rem;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Join Our Community</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Whether you're a pickle lover or a pickle maker, there's a place for you at PickleHub.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Register as Customer
+                </a>
+                <a href="{{ url_for('auth.register') }}?role=seller" class="btn btn-secondary">
+                    <i class="fas fa-store"></i> Become a Seller
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

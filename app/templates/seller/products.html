@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}My Products - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem;">
+            <i class="fas fa-box"></i> My Products
+        </h1>
+        <a href="{{ url_for('products.upload') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Product
+        </a>
+    </div>
+    
+    {% if products %}
+    <div class="glass" style="padding: 1.5rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+            {% for product in products %}
+            <div class="glass-card" style="overflow: hidden;">
+                <div style="height: 180px; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; position: relative;">
+                    {% if product.images and product.images[0] %}
+                    <img src="{{ product.images[0] }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <i class="fas fa-jar" style="font-size: 3rem; color: var(--accent); opacity: 0.3;"></i>
+                    {% endif %}
+                    <span class="badge badge-{{ 'success' if product.status == 'active' else 'warning' if product.status == 'pending' else 'danger' }}" style="position: absolute; top: 10px; right: 10px;">
+                        {{ product.status|capitalize }}
+                    </span>
+                </div>
+                <div style="padding: 1rem;">
+                    <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">{{ product.name }}</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-weight: 700; color: var(--accent);">₹{{ product.price }}</span>
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Stock: {{ product.stock }}</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <a href="{{ url_for('seller.edit_product', product_id=product.id) }}" class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.9rem;">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <form method="POST" action="{{ url_for('seller.delete_product', product_id=product.id) }}" style="flex: 1;">
+                            <button type="submit" class="btn btn-danger" style="width: 100%; font-size: 0.9rem;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if total > per_page %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+            {% if page > 1 %}
+            <a href="{{ url_for('seller.products', page=page-1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="btn btn-secondary" style="background: var(--accent); color: white;">{{ page }}</span>
+            
+            {% if (page * per_page) < total %}
+            <a href="{{ url_for('seller.products', page=page+1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 4rem; text-align: center;">
+        <i class="fas fa-box-open" style="font-size: 5rem; color: var(--accent); opacity: 0.3; margin-bottom: 1.5rem;"></i>
+        <h2 style="margin-bottom: 0.5rem;">No products yet</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Start selling by adding your first product!</p>
+        <a href="{{ url_for('products.upload') }}" class="btn btn-primary" style="justify-content: center;">
+            <i class="fas fa-plus"></i> Add Your First Product
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

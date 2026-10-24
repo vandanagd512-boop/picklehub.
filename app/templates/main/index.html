@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Home - PickleHub{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section style="padding: 4rem 2rem; text-align: center; background: var(--gradient); color: white; margin-bottom: 3rem;">
+    <div class="container" style="padding: 0;">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem; font-weight: 800;">Discover Authentic Homemade Pickles</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9;">Support local artisans and enjoy traditional flavors from across India</p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('main.search') }}" class="btn" style="background: white; color: var(--accent); justify-content: center;">
+                <i class="fas fa-search"></i> Explore Pickles
+            </a>
+            {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.register') }}" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; justify-content: center;">
+                <i class="fas fa-user-plus"></i> Join as Seller
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="container" style="margin-bottom: 4rem;">
+    <h2 style="font-size: 2rem; margin-bottom: 2rem; text-align: center;">Browse by Category</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+       {% for category in categories %}
+        <a href="{{ url_for('main.category', category_id=category.id) }}" class="glass-card" style="text-decoration: none; color: inherit; padding: 2rem; text-align: center; display: block;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                <i class="fas fa-jar"></i>
+            </div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">{{ category.name }}</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">{{ category.description or 'Explore our collection' }}</p>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section class="container" style="margin-bottom: 4rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 2rem;">Featured Pickles</h2>
+        <a href="{{ url_for('main.search') }}" style="color: var(--accent); text-decoration: none; font-weight: 600;">
+            View All <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+        {% for product in featured_products %}
+        <div class="glass-card" style="overflow: hidden;">
+            <div style="height: 200px; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; position: relative;">
+                {% if product.images and product.images[0] %}
+                <img src="{{ product.images[0] }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                <i class="fas fa-jar" style="font-size: 4rem; color: var(--accent); opacity: 0.3;"></i>
+                {% endif %}
+                {% if product.discount_percentage %}
+                <span class="badge badge-danger" style="position: absolute; top: 10px; right: 10px;">{{ product.discount_percentage }}% OFF</span>
+                {% endif %}
+            </div>
+            <div style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">{{ product.category.name if product.category else 'Artisanal Pickle' }}</span>
+                    {% set is_nv = 'chicken' in product.name.lower() or 'fish' in product.name.lower() or 'prawn' in product.name.lower() or 'mutton' in product.name.lower() %}
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1.5px solid {% if is_nv %}#e74c3c{% else %}#2ecc71{% endif %}; padding: 1px; border-radius: 3px;" title="{% if is_nv %}Non-Vegetarian{% else %}100% Pure Vegetarian{% endif %}">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: {% if is_nv %}#e74c3c{% else %}#2ecc71{% endif %};"></span>
+                    </span>
+                </div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">{{ product.name }}</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">{{ product.description[:80] }}...</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <span style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">₹{{ product.price }}</span>
+                        {% if product.original_price %}
+                        <span style="text-decoration: line-through; color: var(--text-secondary); margin-left: 0.5rem;">₹{{ product.original_price }}</span>
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.25rem; color: var(--warning);">
+                        <i class="fas fa-star"></i>
+                        <span>{{ product.rating }}</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                    <a href="{{ url_for('cart.buy_now', product_id=product.id) }}" class="btn btn-primary" style="flex: 1.2; justify-content: center; font-size: 0.88rem; padding: 0.6rem; background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); border: none; font-weight: 700;">
+                        <i class="fas fa-bolt"></i> Buy Now
+                    </a>
+                    <a href="{{ url_for('products.detail', product_id=product.id) }}" class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.88rem; padding: 0.6rem;">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- AI Recommendations Section (for logged in users) -->
+{% if recommendations %}
+<section class="container" style="margin-bottom: 4rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 2rem;">
+            <i class="fas fa-magic"></i> Recommended for You
+        </h2>
+        <a href="{{ url_for('main.search') }}" style="color: var(--accent); text-decoration: none; font-weight: 600;">
+            View All <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+        {% for product in recommendations %}
+        <div class="glass-card" style="overflow: hidden;">
+            <div style="height: 200px; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center;">
+                {% if product.images and product.images[0] %}
+                <img src="{{ product.images[0] }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                <i class="fas fa-jar" style="font-size: 4rem; color: var(--accent); opacity: 0.3;"></i>
+                {% endif %}
+            </div>
+            <div style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">{{ product.category.name if product.category else 'Artisanal Pickle' }}</span>
+                    {% set is_nv = 'chicken' in product.name.lower() or 'fish' in product.name.lower() or 'prawn' in product.name.lower() or 'mutton' in product.name.lower() %}
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border: 1.5px solid {% if is_nv %}#e74c3c{% else %}#2ecc71{% endif %}; padding: 1px; border-radius: 3px;" title="{% if is_nv %}Non-Vegetarian{% else %}100% Pure Vegetarian{% endif %}">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: {% if is_nv %}#e74c3c{% else %}#2ecc71{% endif %};"></span>
+                    </span>
+                </div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">{{ product.name }}</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <span style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">₹{{ product.price }}</span>
+                    <div style="display: flex; align-items: center; gap: 0.25rem; color: var(--warning);">
+                        <i class="fas fa-star"></i>
+                        <span>{{ product.rating }}</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                    <a href="{{ url_for('cart.buy_now', product_id=product.id) }}" class="btn btn-primary" style="flex: 1.2; justify-content: center; font-size: 0.88rem; padding: 0.6rem; background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); border: none; font-weight: 700;">
+                        <i class="fas fa-bolt"></i> Buy Now
+                    </a>
+                    <a href="{{ url_for('products.detail', product_id=product.id) }}" class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.88rem; padding: 0.6rem;">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Features Section -->
+<section class="container" style="margin-bottom: 4rem;">
+    <h2 style="font-size: 2rem; margin-bottom: 2rem; text-align: center;">Why Choose PickleHub?</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+        <div class="glass-card" style="padding: 2rem; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                <i class="fas fa-hand-holding-heart"></i>
+            </div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Support Local</h3>
+            <p style="color: var(--text-secondary);">Directly support local artisans and small businesses</p>
+        </div>
+        <div class="glass-card" style="padding: 2rem; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                <i class="fas fa-certificate"></i>
+            </div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Authentic Quality</h3>
+            <p style="color: var(--text-secondary);">Traditional recipes passed down through generations</p>
+        </div>
+        <div class="glass-card" style="padding: 2rem; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                <i class="fas fa-truck"></i>
+            </div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Fast Delivery</h3>
+            <p style="color: var(--text-secondary);">Quick and reliable delivery across India</p>
+        </div>
+        <div class="glass-card" style="padding: 2rem; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Secure Payments</h3>
+            <p style="color: var(--text-secondary);">Safe and secure payment options</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

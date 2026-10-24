@@ -1,0 +1,667 @@
+{% extends "base.html" %}
+
+{% block title %}Seller Orders - Zomato Merchant Console - PickleHub{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Zomato Partner Merchant Order Styling */
+.seller-alert-banner {
+    background: linear-gradient(135deg, rgba(230, 81, 0, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);
+}
+
+.bell-pulse {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #f59e0b;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    animation: pulseRing 1.8s infinite;
+}
+
+@keyframes pulseRing {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+.filter-tab {
+    padding: 0.6rem 1.2rem;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.filter-tab:hover, .filter-tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.order-merchant-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.order-merchant-card.is-pending {
+    border: 2px solid #f59e0b;
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, rgba(255,255,255,0.01) 100%);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.12);
+}
+
+.action-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 2rem; margin: 0 0 0.25rem 0;">
+                <i class="fas fa-store" style="color: var(--accent);"></i> Merchant Orders Console
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">
+                Accept, pack, and fulfill fresh artisanal pickle orders in real-time.
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+            <a href="{{ url_for('seller.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <button onclick="window.location.reload();" class="btn btn-secondary" title="Refresh Orders">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+    
+    <!-- Incoming Orders High-Priority Alert Banner (Zomato Partner Style) -->
+    {% if pending_count and pending_count > 0 %}
+    <div class="seller-alert-banner">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="bell-pulse">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div>
+                <h3 style="margin: 0 0 0.25rem 0; font-size: 1.15rem; color: #f59e0b; font-weight: 800;">
+                    Action Required: {{ pending_count }} New Incoming Order{{ 's' if pending_count > 1 else '' }}!
+                </h3>
+                <p style="margin: 0; color: var(--text-primary); font-size: 0.92rem;">
+                    Customers are waiting for you to confirm. Accept now to start packing fresh pickles.
+                </p>
+            </div>
+        </div>
+        <div>
+            <a href="{{ url_for('seller.orders', status='pending') }}" class="btn btn-primary" style="background: #f59e0b; border-color: #f59e0b; color: #000; font-weight: 700;">
+                <i class="fas fa-eye"></i> View Pending Orders
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Filter Tabs -->
+    <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 0.5rem;">
+        <a href="{{ url_for('seller.orders', status='all') }}" class="filter-tab {{ 'active' if current_filter == 'all' else '' }}">
+            All Orders ({{ all_orders|length }})
+        </a>
+        <a href="{{ url_for('seller.orders', status='pending') }}" class="filter-tab {{ 'active' if current_filter == 'pending' else '' }}">
+            <i class="fas fa-clock"></i> Pending ({{ pending_count }})
+        </a>
+        <a href="{{ url_for('seller.orders', status='confirmed') }}" class="filter-tab {{ 'active' if current_filter == 'confirmed' else '' }}">
+            <i class="fas fa-concierge-bell"></i> Confirmed ({{ confirmed_count }})
+        </a>
+        <a href="{{ url_for('seller.orders', status='processing') }}" class="filter-tab {{ 'active' if current_filter == 'processing' else '' }}">
+            <i class="fas fa-box-open"></i> Packing ({{ processing_count }})
+        </a>
+        <a href="{{ url_for('seller.orders', status='shipped') }}" class="filter-tab {{ 'active' if current_filter == 'shipped' else '' }}">
+            <i class="fas fa-shipping-fast"></i> In Transit ({{ shipped_count }})
+        </a>
+        <a href="{{ url_for('seller.orders', status='delivered') }}" class="filter-tab {{ 'active' if current_filter == 'delivered' else '' }}">
+            <i class="fas fa-check-circle"></i> Delivered ({{ delivered_count }})
+        </a>
+    </div>
+    
+    <!-- Orders List -->
+    {% if orders %}
+    <div>
+        {% for order in orders %}
+        {% set st = order.status.value if order.status.value is defined else order.status|string %}
+        {% set st = st|lower %}
+        
+        <div class="order-merchant-card {{ 'is-pending' if st == 'pending' else '' }}" id="orderCard_{{ order.id }}">
+            <!-- Card Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                        <h3 style="font-size: 1.25rem; margin: 0; font-weight: 800; color: var(--text-primary);">
+                            <i class="fas fa-jar" style="color: var(--accent);"></i> {{ order.product_names_summary }}
+                            <span style="font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);">(#{{ order.id[:8] }})</span>
+                        </h3>
+                        <span id="badge_{{ order.id }}" class="badge badge-{{ 'success' if st == 'delivered' else 'warning' if st == 'pending' else 'primary' }}" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                            {{ st|capitalize }}
+                        </span>
+                        {% if st == 'pending' %}
+                        <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-radius: 50px; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 700;">
+                            ⚡ NEW
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">
+                        Received: {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else 'Recently' }}
+                    </p>
+                </div>
+                
+                <div style="text-align: right;">
+                    <div style="font-weight: 800; color: var(--accent); font-size: 1.35rem;">
+                        ₹{{ "%.2f"|format(order.total_amount) }}
+                    </div>
+                    <span style="font-size: 0.82rem; color: var(--text-secondary);">
+                        Payment: <strong>{{ order.payment_method|upper }}</strong> ({{ order.payment_status|capitalize }})
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Order Items Preview -->
+            <div style="background: var(--bg-secondary); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;">
+                <div style="display: flex; gap: 1rem; overflow-x: auto; align-items: center; padding-bottom: 0.5rem;">
+                    {% for item in order.items %}
+                    <div style="display: flex; align-items: center; gap: 0.75rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; flex-shrink: 0;">
+                        <div style="width: 45px; height: 45px; border-radius: 6px; overflow: hidden; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center;">
+                            {% if item.product and item.product.images and item.product.images[0] %}
+                            <img src="{{ item.product.images[0] }}" alt="{{ item.product_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                            <i class="fas fa-jar" style="color: var(--accent);"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-primary); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ item.product_name }}
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                Qty: <strong>{{ item.quantity }}</strong> • ₹{{ "%.2f"|format(item.price) }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if order.shipping_address %}
+                <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-map-marker-alt" style="color: var(--accent);"></i>
+                    <span>Ship to: <strong>{{ order.shipping_address.full_name }}</strong>, {{ order.shipping_address.city }}, {{ order.shipping_address.state }} (Phone: {{ order.shipping_address.phone }})</span>
+                </div>
+                {% endif %}
+                
+                {% if order.notes %}
+                <div style="margin-top: 0.4rem; font-size: 0.82rem; color: var(--text-secondary);">
+                    <i class="fas fa-sticky-note"></i> Note: {{ order.notes }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Zomato Partner 1-Click Action Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+                <!-- Left: View Detail / Live Tracker link -->
+                <div>
+                    <a href="{{ url_for('orders.detail', order_id=order.id) }}" target="_blank" class="btn btn-secondary" style="font-size: 0.88rem; padding: 0.5rem 0.85rem;">
+                        <i class="fas fa-external-link-alt"></i> Customer Live View
+                    </a>
+                </div>
+                
+                <!-- Right: Immediate Action Buttons (Zomato Partner Style) -->
+                <div class="action-btn-group" id="actionGroup_{{ order.id }}">
+                    {% if st == 'pending' %}
+                        <!-- 1-Click Form Accept Button with AJAX enhancement -->
+                        <form method="POST" action="{{ url_for('seller.accept_order', order_id=order.id) }}" style="display:inline;" onsubmit="handleFastAction(event, '{{ order.id }}', 'confirmed')">
+                            <button type="submit" class="btn btn-success" style="background: #22c55e; border-color: #22c55e; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.95rem; cursor: pointer;">
+                                <i class="fas fa-check-circle"></i> Accept & Confirm Order
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('seller.update_order_status', order_id=order.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to decline this order?');">
+                            <input type="hidden" name="status" value="cancelled">
+                            <button type="submit" class="btn btn-danger" style="padding: 0.65rem 1rem; font-size: 0.88rem; cursor: pointer;">
+                                <i class="fas fa-times"></i> Decline
+                            </button>
+                        </form>
+                    {% elif st == 'confirmed' %}
+                        <form method="POST" action="{{ url_for('seller.pack_order', order_id=order.id) }}" style="display:inline;" onsubmit="handleFastAction(event, '{{ order.id }}', 'processing')">
+                            <button type="submit" class="btn btn-primary" style="background: #3b82f6; border-color: #3b82f6; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.95rem; cursor: pointer;">
+                                <i class="fas fa-box-open"></i> Mark as Freshly Packed
+                            </button>
+                        </form>
+                    {% elif st == 'processing' %}
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <form method="POST" action="{{ url_for('seller.dispatch_order', order_id=order.id) }}" style="display:inline;" onsubmit="handleFastAction(event, '{{ order.id }}', 'shipped')">
+                                <button type="submit" class="btn btn-primary" style="background: #8b5cf6; border-color: #8b5cf6; font-weight: 700; padding: 0.65rem 1.3rem; font-size: 0.95rem; cursor: pointer;">
+                                    <i class="fas fa-paper-plane"></i> ⚡ Quick Dispatch
+                                </button>
+                            </form>
+                            <button type="button" onclick="toggleShipForm('{{ order.id }}')" class="btn btn-secondary" style="font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer;">
+                                <i class="fas fa-edit"></i> Courier Details ▾
+                            </button>
+                        </div>
+                    {% elif st == 'shipped' %}
+                        <form method="POST" action="{{ url_for('seller.deliver_order', order_id=order.id) }}" style="display:inline;" onsubmit="handleFastAction(event, '{{ order.id }}', 'delivered')">
+                            <button type="submit" class="btn btn-success" style="background: #10b981; border-color: #10b981; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.95rem; cursor: pointer;">
+                                <i class="fas fa-check-double"></i> Mark Delivered
+                            </button>
+                        </form>
+                    {% elif st == 'delivered' %}
+                        <span style="color: #10b981; font-weight: 700; font-size: 0.92rem;">
+                            <i class="fas fa-check-circle"></i> Completed & Fulfilled
+                        </span>
+                    {% else %}
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Order {{ st|capitalize }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Ship / Courier Inline Form (Standard Form + AJAX) -->
+            <form id="shipForm_{{ order.id }}" method="POST" action="{{ url_for('seller.dispatch_order', order_id=order.id) }}" onsubmit="handleShipSubmit(event, '{{ order.id }}')" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(139, 92, 246, 0.08); border: 1px dashed #8b5cf6; border-radius: 10px;">
+                <input type="hidden" name="status" value="shipped">
+                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: #8b5cf6;">
+                    <i class="fas fa-truck"></i> Enter Courier & Tracking Details for Order #{{ order.id[:8] }}
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) 130px; gap: 0.75rem; align-items: flex-end;">
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.2rem;">Courier Partner</label>
+                        <select name="courier_name" id="courier_{{ order.id }}" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-primary); font-size: 0.88rem;">
+                            <option value="BlueDart Express">BlueDart Express</option>
+                            <option value="Delhivery Logistics">Delhivery Logistics</option>
+                            <option value="DTDC Express">DTDC Express</option>
+                            <option value="India Post Speed Post">India Post Speed Post</option>
+                            <option value="Shadowfax Local">Shadowfax Local</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.2rem;">AWB / Tracking Number</label>
+                        <input type="text" name="tracking_awb" id="awb_{{ order.id }}" placeholder="e.g. BD7839218" value="AWB{{ order.id[:6]|upper }}" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-primary); font-size: 0.88rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.2rem;">Estimated Delivery</label>
+                        <select name="estimated_delivery" id="eta_sel_{{ order.id }}" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-primary); font-size: 0.88rem;">
+                            <option value="Tomorrow (24h Express)">Tomorrow (24h Express)</option>
+                            <option value="In 2 Business Days" selected>In 2 Business Days</option>
+                            <option value="In 3-4 Business Days">In 3-4 Business Days</option>
+                            <option value="Same Day Express">Same Day Express</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" style="background: #8b5cf6; border-color: #8b5cf6; width: 100%; justify-content: center; padding: 0.55rem; font-size: 0.88rem; cursor: pointer; font-weight: 700;">
+                            <i class="fas fa-paper-plane"></i> Dispatch Now
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if total > per_page %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+            {% if page > 1 %}
+            <a href="{{ url_for('seller.orders', page=page-1, status=current_filter) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="btn btn-secondary" style="background: var(--accent); color: white;">{{ page }}</span>
+            
+            {% if (page * per_page) < total %}
+            <a href="{{ url_for('seller.orders', page=page+1, status=current_filter) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 3rem 2rem; text-align: center; margin-bottom: 2rem;">
+        <i class="fas fa-check-circle" style="font-size: 3.5rem; color: #22c55e; margin-bottom: 1.25rem; opacity: 0.85;"></i>
+        <h2 style="margin-bottom: 0.5rem; font-size: 1.4rem;">No {{ current_filter|capitalize if current_filter != 'all' else '' }} Orders Right Now</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 550px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+            {% if current_filter == 'pending' %}
+                All incoming orders have been accepted! You can see orders currently being packed or in transit below.
+            {% else %}
+                No orders currently in the "{{ current_filter|capitalize }}" stage. Switch to "All Orders" to view your complete orders list.
+            {% endif %}
+        </p>
+        <a href="{{ url_for('seller.orders', status='all') }}" class="btn btn-primary" style="font-weight: 700; padding: 0.65rem 1.5rem;">
+            <i class="fas fa-list"></i> View All Store Orders ({{ all_orders|length }})
+        </a>
+    </div>
+
+    {% if all_orders and current_filter != 'all' %}
+    <div style="margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--text-primary);">
+                <i class="fas fa-boxes" style="color: var(--accent);"></i> All Active Store Orders ({{ all_orders|length }})
+            </h3>
+            <a href="{{ url_for('seller.orders', status='all') }}" style="color: var(--accent); font-weight: 600; text-decoration: none; font-size: 0.9rem;">
+                See full list →
+            </a>
+        </div>
+        <div>
+            {% for order in all_orders[:5] %}
+            {% set st = order.status.value if order.status.value is defined else order.status|string %}
+            {% set st = st|lower %}
+            <div class="order-merchant-card" style="margin-bottom: 1rem; padding: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                            <strong style="font-size: 1.05rem; color: var(--text-primary);">
+                                <i class="fas fa-jar" style="color: var(--accent);"></i> {{ order.product_names_summary }}
+                            </strong>
+                            <span class="badge badge-{{ 'success' if st == 'delivered' else 'warning' if st == 'pending' else 'primary' }}" style="font-size: 0.78rem;">
+                                {{ st|capitalize }}
+                            </span>
+                        </div>
+                        <span style="font-size: 0.82rem; color: var(--text-secondary);">Order #{{ order.id[:8] }} • {{ order.items|length }} item{{ 's' if order.items|length != 1 else '' }} • ₹{{ "%.2f"|format(order.total_amount) }} • Placed {{ order.created_at.strftime('%d %b, %I:%M %p') if order.created_at else 'Recently' }}</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{{ url_for('orders.detail', order_id=order.id) }}" target="_blank" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">
+                            <i class="fas fa-eye"></i> Track
+                        </a>
+                        {% if st == 'pending' %}
+                        <form method="POST" action="{{ url_for('seller.accept_order', order_id=order.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-success" style="background: #22c55e; border-color: #22c55e; padding: 0.4rem 0.8rem; font-size: 0.82rem; font-weight: 700;">
+                                <i class="fas fa-check"></i> Accept
+                            </button>
+                        </form>
+                        {% elif st == 'confirmed' %}
+                        <form method="POST" action="{{ url_for('seller.pack_order', order_id=order.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-primary" style="background: #3b82f6; border-color: #3b82f6; padding: 0.4rem 0.8rem; font-size: 0.82rem; font-weight: 700;">
+                                <i class="fas fa-box"></i> Pack
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle inline dispatch courier form
+function toggleShipForm(orderId) {
+    const el = document.getElementById('shipForm_' + orderId);
+    if (el) {
+        const isHidden = (el.style.display === 'none' || !el.style.display);
+        el.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+}
+
+// Intercept form submit and try fast AJAX first
+function handleFastAction(event, orderId, newStatus) {
+    if (event) {
+        event.preventDefault();
+    }
+    fastUpdateOrderStatus(orderId, newStatus);
+}
+
+// 1-Click Fast Order Status Updater
+async function fastUpdateOrderStatus(orderId, newStatus) {
+    if (newStatus === 'cancelled' && !confirm('Are you sure you want to decline/cancel this order?')) {
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/seller/orders/${orderId}/update-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (!res.ok) {
+            // Instant server fallback if fetch failed or returned non-200
+            const actionPath = newStatus === 'confirmed' ? 'accept' : newStatus === 'processing' ? 'pack' : newStatus === 'shipped' ? 'dispatch' : newStatus === 'delivered' ? 'deliver' : '';
+            if (actionPath) {
+                window.location.href = `/seller/orders/${orderId}/${actionPath}`;
+                return;
+            }
+        }
+        
+        const data = await res.json();
+        if (data.success) {
+            // Update Card dynamically without reload
+            const card = document.getElementById('orderCard_' + orderId);
+            const badge = document.getElementById('badge_' + orderId);
+            const actionGroup = document.getElementById('actionGroup_' + orderId);
+            
+            if (badge) {
+                badge.className = 'badge badge-' + (newStatus === 'delivered' ? 'success' : (['confirmed', 'processing', 'shipped'].includes(newStatus) ? 'primary' : 'warning'));
+                badge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+            }
+            
+            if (card && newStatus !== 'pending') {
+                card.classList.remove('is-pending');
+            }
+            
+            // Advance action buttons like Zomato Partner app
+            if (actionGroup) {
+                if (newStatus === 'confirmed') {
+                    actionGroup.innerHTML = `
+                        <form method="POST" action="/seller/orders/${orderId}/pack" style="display:inline;" onsubmit="handleFastAction(event, '${orderId}', 'processing')">
+                            <button type="submit" class="btn btn-primary" style="background: #3b82f6; border-color: #3b82f6; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.95rem; cursor: pointer;">
+                                <i class="fas fa-box-open"></i> Mark as Freshly Packed
+                            </button>
+                        </form>
+                    `;
+                } else if (newStatus === 'processing') {
+                    actionGroup.innerHTML = `
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <form method="POST" action="/seller/orders/${orderId}/dispatch" style="display:inline;" onsubmit="handleFastAction(event, '${orderId}', 'shipped')">
+                                <button type="submit" class="btn btn-primary" style="background: #8b5cf6; border-color: #8b5cf6; font-weight: 700; padding: 0.65rem 1.3rem; font-size: 0.95rem; cursor: pointer;">
+                                    <i class="fas fa-paper-plane"></i> ⚡ Quick Dispatch
+                                </button>
+                            </form>
+                            <button type="button" onclick="toggleShipForm('${orderId}')" class="btn btn-secondary" style="font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer;">
+                                <i class="fas fa-edit"></i> Courier Details ▾
+                            </button>
+                        </div>
+                    `;
+                } else if (newStatus === 'shipped') {
+                    actionGroup.innerHTML = `
+                        <form method="POST" action="/seller/orders/${orderId}/deliver" style="display:inline;" onsubmit="handleFastAction(event, '${orderId}', 'delivered')">
+                            <button type="submit" class="btn btn-success" style="background: #10b981; border-color: #10b981; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.95rem; cursor: pointer;">
+                                <i class="fas fa-check-double"></i> Mark Delivered
+                            </button>
+                        </form>
+                    `;
+                } else if (newStatus === 'delivered') {
+                    actionGroup.innerHTML = `
+                        <span style="color: #10b981; font-weight: 700; font-size: 0.92rem;">
+                            <i class="fas fa-check-circle"></i> Completed & Fulfilled
+                        </span>
+                    `;
+                } else if (newStatus === 'cancelled') {
+                    actionGroup.innerHTML = `
+                        <span style="color: #ef4444; font-weight: 700; font-size: 0.92rem;">
+                            <i class="fas fa-times-circle"></i> Cancelled
+                        </span>
+                    `;
+                }
+            }
+            
+            // Show toast notification
+            showActionToast(data.message || 'Status updated successfully', '#22c55e');
+        } else {
+            alert(data.message || 'Failed to update order status');
+        }
+    } catch (e) {
+        console.error('Fast status update error:', e);
+        // Fallback: direct navigation to action
+        const actionPath = newStatus === 'confirmed' ? 'accept' : newStatus === 'processing' ? 'pack' : newStatus === 'shipped' ? 'dispatch' : newStatus === 'delivered' ? 'deliver' : '';
+        if (actionPath) {
+            window.location.href = `/seller/orders/${orderId}/${actionPath}`;
+        } else {
+            window.location.reload();
+        }
+    }
+}
+
+// Handle Dispatch Form Submit
+function handleShipSubmit(event, orderId) {
+    if (event) {
+        event.preventDefault();
+    }
+    submitShipment(orderId);
+}
+
+// Submit shipment with courier and AWB
+async function submitShipment(orderId) {
+    const courierEl = document.getElementById('courier_' + orderId);
+    const awbEl = document.getElementById('awb_' + orderId);
+    const etaEl = document.getElementById('eta_sel_' + orderId);
+    
+    const courierName = courierEl ? courierEl.value : 'BlueDart Express';
+    const trackingAwb = awbEl ? awbEl.value : 'AWB' + Math.floor(100000 + Math.random() * 900000);
+    const estimatedDelivery = etaEl ? etaEl.value : 'In 2 Business Days';
+    
+    try {
+        const res = await fetch(`/seller/orders/${orderId}/update-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                status: 'shipped',
+                courier_name: courierName,
+                tracking_awb: trackingAwb,
+                estimated_delivery: estimatedDelivery
+            })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+            const shipForm = document.getElementById('shipForm_' + orderId);
+            if (shipForm) shipForm.style.display = 'none';
+            
+            const badge = document.getElementById('badge_' + orderId);
+            if (badge) {
+                badge.className = 'badge badge-primary';
+                badge.textContent = 'Shipped';
+            }
+            
+            const actionGroup = document.getElementById('actionGroup_' + orderId);
+            if (actionGroup) {
+                actionGroup.innerHTML = `
+                    <form method="POST" action="/seller/orders/${orderId}/deliver" style="display:inline;" onsubmit="handleFastAction(event, '${orderId}', 'delivered')">
+                        <button type="submit" class="btn btn-success" style="background: #10b981; border-color: #10b981; font-weight: 700; padding: 0.65rem 1.4rem; font-size: 0.95rem; cursor: pointer;">
+                            <i class="fas fa-check-double"></i> Mark Delivered
+                        </button>
+                    </form>
+                `;
+            }
+            
+            showActionToast(`Order #${orderId.slice(0,8)} dispatched via ${courierName}! AWB: ${trackingAwb} (ETA: ${estimatedDelivery})`, '#8b5cf6');
+        } else {
+            alert(data.message || 'Failed to dispatch order');
+        }
+    } catch (e) {
+        console.error('Shipment error, falling back to form POST:', e);
+        const form = document.getElementById('shipForm_' + orderId);
+        if (form) {
+            form.submit();
+        } else {
+            window.location.href = `/seller/orders/${orderId}/dispatch?courier_name=${encodeURIComponent(courierName)}&tracking_awb=${encodeURIComponent(trackingAwb)}&estimated_delivery=${encodeURIComponent(estimatedDelivery)}`;
+        }
+    }
+}
+
+// Helper to show styled toast notifications
+function showActionToast(message, bgColor) {
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '25px';
+    toast.style.right = '25px';
+    toast.style.background = bgColor || '#22c55e';
+    toast.style.color = '#fff';
+    toast.style.padding = '0.9rem 1.6rem';
+    toast.style.borderRadius = '12px';
+    toast.style.fontWeight = '700';
+    toast.style.fontSize = '0.95rem';
+    toast.style.boxShadow = '0 12px 30px rgba(0,0,0,0.35)';
+    toast.style.zIndex = '9999';
+    toast.style.display = 'flex';
+    toast.style.alignItems = 'center';
+    toast.style.gap = '0.6rem';
+    toast.innerHTML = `<i class="fas fa-check-circle"></i> <span>${message}</span>`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+}
+
+// Background poller to notify seller when a new order arrives
+(function() {
+    let lastPendingCount = {{ pending_count|default(0) }};
+    
+    async function checkIncomingOrders() {
+        try {
+            const res = await fetch('/api/seller/pending-orders-count');
+            if (!res.ok) return;
+            const data = await res.json();
+            
+            if (data && typeof data.pending_count === 'number') {
+                if (data.pending_count > lastPendingCount) {
+                    lastPendingCount = data.pending_count;
+                    // New order arrived!
+                    if (confirm('🔔 NEW ORDER RECEIVED! A customer just placed an order. Click OK to refresh and accept it now.')) {
+                        window.location.reload();
+                    }
+                }
+            }
+        } catch (e) {
+            // silent catch
+        }
+    }
+    
+    setInterval(checkIncomingOrders, 5000);
+})();
+</script>
+{% endblock %}

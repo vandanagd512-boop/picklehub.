@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Unauthorized - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="glass" style="max-width: 500px; margin: 4rem auto; padding: 3rem; text-align: center;">
+        <div style="font-size: 6rem; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1rem;">
+            401
+        </div>
+        <h1 style="font-size: 2rem; margin-bottom: 1rem;">Unauthorized</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">You need to be logged in to access this page.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary" style="justify-content: center;">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary" style="justify-content: center;">
+                <i class="fas fa-home"></i> Go Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

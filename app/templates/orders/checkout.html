@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+
+{% block title %}Secure Checkout - PickleHub{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    <!-- Breadcrumb & Header -->
+    <div style="margin-bottom: 2rem;">
+        <nav style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+            <a href="{{ url_for('main.index') }}" style="color: var(--text-secondary); text-decoration: none;">Home</a>
+            <span style="margin: 0 0.5rem;">/</span>
+            <a href="{{ url_for('cart.index') }}" style="color: var(--text-secondary); text-decoration: none;">Cart</a>
+            <span style="margin: 0 0.5rem;">/</span>
+            <span style="color: var(--accent); font-weight: 600;">Checkout</span>
+        </nav>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <h1 style="font-size: 2.2rem; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">
+                <i class="fas fa-shield-alt"></i> Complete Your Order
+            </h1>
+            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--success); font-weight: 600; font-size: 0.95rem; background: rgba(0, 184, 148, 0.1); padding: 0.4rem 0.8rem; border-radius: 20px;">
+                <i class="fas fa-lock"></i> 256-Bit SSL Encrypted & Secure
+            </div>
+        </div>
+    </div>
+    
+    <form method="POST" action="{{ url_for('orders.checkout') }}" id="checkout-form">
+        <div style="display: grid; grid-template-columns: 1fr 380px; gap: 2rem; align-items: start;">
+            
+            <!-- Left Column: Address, Payment, Notes -->
+            <div>
+                <!-- 1. Delivery Address Card -->
+                <div class="glass" style="padding: 1.8rem; margin-bottom: 2rem; border-radius: 16px; border: 1px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                        <h2 style="font-size: 1.3rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;">1</span>
+                            Delivery Address
+                        </h2>
+                        {% if addresses %}
+                        <button type="button" id="toggle-new-addr-btn" onclick="toggleNewAddress()" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                            <i class="fas fa-plus"></i> Add New Address
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    {% if addresses %}
+                    <!-- Existing Saved Addresses -->
+                    <div id="saved-addresses-list" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Select delivery destination:</p>
+                        {% for address in addresses %}
+                        <label class="address-card" style="display: block; padding: 1rem 1.25rem; border: 2px solid {% if loop.first %}var(--accent){% else %}var(--border){% endif %}; border-radius: 12px; cursor: pointer; background: var(--bg-secondary); transition: all 0.2s ease;">
+                            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                <input type="radio" name="shipping_address" value="{{ address.id }}" {% if loop.first %}checked{% endif %} onchange="onAddressSelect(this)" style="margin-top: 0.25rem; accent-color: var(--accent);">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                        <span style="font-weight: 700; color: var(--text-primary);">{{ address.full_name }}</span>
+                                        <span class="badge badge-primary" style="font-size: 0.75rem; text-transform: uppercase;">{{ address.address_type|default('Home') }}</span>
+                                        {% if address.is_default %}
+                                        <span class="badge badge-success" style="font-size: 0.75rem;">Default</span>
+                                        {% endif %}
+                                    </div>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.25rem; line-height: 1.4;">
+                                        {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}, {{ address.city }}, {{ address.state }} - {{ address.postal_code }}
+                                    </p>
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
+                                        <i class="fas fa-phone-alt" style="font-size: 0.8rem; margin-right: 0.25rem;"></i> +91 {{ address.phone }}
+                                    </p>
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <!-- Informative Banner when no addresses are saved -->
+                    <div style="padding: 1rem 1.25rem; background: rgba(225, 112, 85, 0.08); border-left: 4px solid var(--accent); border-radius: 8px; margin-bottom: 1.5rem;">
+                        <p style="margin: 0; font-weight: 600; color: var(--text-primary);">
+                            <i class="fas fa-map-pin" style="color: var(--accent); margin-right: 0.5rem;"></i> No address found on your account
+                        </p>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+                            Please enter your delivery details below. This address will be securely saved for this and future orders.
+                        </p>
+                    </div>
+                    <input type="hidden" name="shipping_address" value="new">
+                    {% endif %}
+                    
+                    <!-- New Address Form (Always open if no addresses; togglable if addresses exist) -->
+                    <div id="new-address-form-box" style="{% if addresses %}display: none;{% endif %} background: var(--bg-primary); padding: 1.5rem; border-radius: 12px; border: 1px dashed var(--border); margin-top: 1rem;">
+                        <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--accent);">
+                            <i class="fas fa-truck"></i> Enter Shipping Details
+                        </h4>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight: 600;">Full Name *</label>
+                                <input type="text" name="new_full_name" id="new_full_name" value="{{ current_user.full_name or '' }}" placeholder="Receiver's Name" {% if not addresses %}required{% endif %} style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight: 600;">Contact Phone *</label>
+                                <input type="tel" name="new_phone" id="new_phone" value="{{ current_user.phone or '' }}" placeholder="10-digit mobile number" {% if not addresses %}required{% endif %} style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight: 600;">Flat / House No. / Building / Street Address *</label>
+                            <input type="text" name="new_address_line1" id="new_address_line1" placeholder="e.g. Flat 302, Green Meadows Apartment, Road No. 4" {% if not addresses %}required{% endif %} style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight: 600;">Landmark / Area / Colony (Optional)</label>
+                            <input type="text" name="new_address_line2" id="new_address_line2" placeholder="e.g. Near Apollo Hospital, Madhapur" style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight: 600;">City / Town *</label>
+                                <input type="text" name="new_city" id="new_city" placeholder="e.g. Hyderabad" {% if not addresses %}required{% endif %} style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight: 600;">State *</label>
+                                <input type="text" name="new_state" id="new_state" placeholder="e.g. Telangana" {% if not addresses %}required{% endif %} style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight: 600;">PIN / Postal Code *</label>
+                                <input type="text" name="new_postal_code" id="new_postal_code" placeholder="e.g. 500081" maxlength="6" {% if not addresses %}required{% endif %} style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.95rem;">
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-top: 0.5rem;">
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Address Type:</span>
+                                <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;">
+                                    <input type="radio" name="new_address_type" value="home" checked style="accent-color: var(--accent);"> Home
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;">
+                                    <input type="radio" name="new_address_type" value="work" style="accent-color: var(--accent);"> Work
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;">
+                                    <input type="radio" name="new_address_type" value="other" style="accent-color: var(--accent);"> Other
+                                </label>
+                            </div>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; cursor: pointer;">
+                                <input type="checkbox" name="save_address" checked style="accent-color: var(--accent);">
+                                Save this address to my account
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 2. Payment Method Card -->
+                <div class="glass" style="padding: 1.8rem; margin-bottom: 2rem; border-radius: 16px; border: 1px solid var(--border);">
+                    <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;">2</span>
+                        Payment Method
+                    </h2>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <!-- COD Option -->
+                        <label class="payment-method-card" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; border: 2px solid var(--accent); border-radius: 12px; cursor: pointer; background: var(--bg-secondary); transition: all 0.2s ease;">
+                            <input type="radio" name="payment_method" value="cod" checked style="accent-color: var(--accent);" onchange="onPaymentChange(this)">
+                            <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(0, 184, 148, 0.15); display: flex; align-items: center; justify-content: center; color: var(--success); font-size: 1.5rem;">
+                                <i class="fas fa-hand-holding-usd"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">Cash on Delivery (COD)</span>
+                                    <span class="badge badge-success" style="font-size: 0.75rem;">Recommended</span>
+                                </div>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.2rem 0 0 0;">Pay with cash or scan QR code via GPay/PhonePe when your pickle jar arrives at your door.</p>
+                            </div>
+                        </label>
+                        
+                        <!-- Online / Razorpay Option -->
+                        <label class="payment-method-card" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; background: var(--bg-secondary); transition: all 0.2s ease;">
+                            <input type="radio" name="payment_method" value="razorpay" style="accent-color: var(--accent);" onchange="onPaymentChange(this)">
+                            <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(225, 112, 85, 0.15); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.5rem;">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">Online Payment (Cards / UPI / NetBanking)</span>
+                                </div>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.2rem 0 0 0;">Instant checkout powered by secure 128-bit encrypted payment gateway.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 3. Billing & Special Instructions -->
+                <div class="glass" style="padding: 1.8rem; border-radius: 16px; border: 1px solid var(--border);">
+                    <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;">3</span>
+                        Order Notes & Delivery Instructions
+                    </h2>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.95rem;">
+                            <input type="checkbox" name="same_as_shipping" checked style="accent-color: var(--accent);">
+                            <span>Billing address is same as shipping address</span>
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
+                            <i class="fas fa-comment-alt"></i> Delivery Instructions (Optional)
+                        </label>
+                        <textarea name="notes" rows="2" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-family: inherit; font-size: 0.9rem;" placeholder="e.g. Leave package with security guard, please ring the bell twice..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Zomato/Swiggy Style Bill Details -->
+            <div>
+                <div class="glass" style="padding: 1.8rem; border-radius: 16px; border: 1px solid var(--border); position: sticky; top: 90px;">
+                    <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="fas fa-receipt" style="color: var(--accent);"></i> Bill Details</span>
+                        <span style="font-size: 0.78rem; font-weight: 600; color: #22c55e; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.25); padding: 0.2rem 0.6rem; border-radius: 20px;">
+                            <i class="fas fa-bolt"></i> Express Prep
+                        </span>
+                    </h3>
+                    
+                    <!-- Items List -->
+                    <div style="max-height: 260px; overflow-y: auto; margin-bottom: 1.2rem; padding-right: 0.25rem;">
+                        {% for item in cart.items %}
+                        <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.85rem; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <div style="width: 52px; height: 52px; border-radius: 8px; overflow: hidden; background: var(--bg-secondary); flex-shrink: 0; border: 1px solid var(--border);">
+                                {% if item.image %}
+                                <img src="{{ item.image }}" alt="{{ item.product_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%;"><i class="fas fa-jar" style="color: var(--accent);"></i></div>
+                                {% endif %}
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <p style="font-weight: 600; font-size: 0.9rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">
+                                    {{ item.product_name }}
+                                </p>
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.15rem 0 0 0;">
+                                    Qty: {{ item.quantity }} × ₹{{ "%.2f"|format(item.price) }}
+                                </p>
+                            </div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">
+                                ₹{{ "%.2f"|format(item.get_total()) }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Coupon Application Card -->
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 10px; margin-bottom: 1.2rem; border: 1px solid var(--border);">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-primary);">
+                            <i class="fas fa-tag" style="color: var(--accent);"></i> Have a Promo Code?
+                        </label>
+                        <div style="display: flex; gap: 0.4rem; margin-bottom: 0.5rem;">
+                            <input type="text" id="coupon-code-input" name="coupon_code" placeholder="e.g. WELCOME10" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem; text-transform: uppercase;">
+                            <button type="button" onclick="applyCoupon()" class="btn btn-secondary" style="padding: 0.5rem 0.9rem; font-size: 0.85rem; font-weight: 600;">
+                                Apply
+                            </button>
+                        </div>
+                        
+                        <!-- Quick Promo Code Chips -->
+                        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                            <span onclick="setCoupon('WELCOME10')" style="cursor: pointer; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 12px; background: rgba(225, 112, 85, 0.1); color: var(--accent); border: 1px dashed var(--accent);">
+                                WELCOME10 (10% OFF)
+                            </span>
+                            <span onclick="setCoupon('PICKLE50')" style="cursor: pointer; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 12px; background: rgba(0, 184, 148, 0.1); color: var(--success); border: 1px dashed var(--success);">
+                                PICKLE50 (₹50 OFF)
+                            </span>
+                        </div>
+                        
+                        <div id="coupon-feedback" style="font-size: 0.8rem; margin-top: 0.4rem; display: none;"></div>
+                    </div>
+                    
+                    <!-- Financial Calculation -->
+                    <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-bottom: 1.2rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                            <span style="color: var(--text-secondary);">Subtotal</span>
+                            <span style="font-weight: 600;">₹<span id="subtotal-val">{{ "%.2f"|format(cart.get_total()) }}</span></span>
+                        </div>
+                        
+                        <div id="discount-row" style="display: none; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem; color: var(--success);">
+                            <span>Coupon Discount</span>
+                            <span style="font-weight: 600;">-₹<span id="discount-val">0.00</span></span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                            <span style="color: var(--text-secondary);">Standard Delivery</span>
+                            <span style="font-weight: 700; color: var(--success);">FREE</span>
+                        </div>
+                        
+                        <div style="border-top: 2px dashed var(--border); margin-top: 0.75rem; padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: baseline;">
+                            <span style="font-size: 1.15rem; font-weight: 700;">Grand Total</span>
+                            <span style="font-size: 1.6rem; font-weight: 800; color: var(--accent);">
+                                ₹<span id="grand-total-val">{{ "%.2f"|format(cart.get_total()) }}</span>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" id="place-order-btn" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1.15rem; padding: 0.9rem; font-weight: 700; border-radius: 10px; box-shadow: 0 4px 15px rgba(225, 112, 85, 0.4);">
+                        <i class="fas fa-lock" style="margin-right: 0.5rem;"></i> Place Order Now
+                    </button>
+                    
+                    <!-- Guarantee Notice -->
+                    <div style="margin-top: 1.2rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px; text-align: center;">
+                        <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">
+                            <i class="fas fa-award" style="color: #fdcb6e;"></i> 100% Traditional Handcrafted Pickles
+                        </p>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.78rem; color: var(--text-secondary);">
+                            No artificial preservatives • Fresh oil & spices
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </form>
+</div>
+
+<script>
+let originalSubtotal = {{ cart.get_total() }};
+let currentDiscount = 0.0;
+let isNewAddressActive = {% if addresses %}false{% else %}true{% endif %};
+
+function toggleNewAddress() {
+    const box = document.getElementById('new-address-form-box');
+    const toggleBtn = document.getElementById('toggle-new-addr-btn');
+    
+    if (box.style.display === 'none' || box.style.display === '') {
+        box.style.display = 'block';
+        if (toggleBtn) toggleBtn.innerHTML = '<i class="fas fa-times"></i> Cancel New Address';
+        isNewAddressActive = true;
+        
+        // Uncheck existing address radio buttons
+        const radios = document.querySelectorAll('input[name="shipping_address"]');
+        radios.forEach(r => r.checked = false);
+        
+        // Set inputs to required
+        document.getElementById('new_full_name').required = true;
+        document.getElementById('new_phone').required = true;
+        document.getElementById('new_address_line1').required = true;
+        document.getElementById('new_city').required = true;
+        document.getElementById('new_state').required = true;
+        document.getElementById('new_postal_code').required = true;
+        
+        document.getElementById('new_full_name').focus();
+    } else {
+        box.style.display = 'none';
+        if (toggleBtn) toggleBtn.innerHTML = '<i class="fas fa-plus"></i> Add New Address';
+        isNewAddressActive = false;
+        
+        // Select first existing address
+        const firstRadio = document.querySelector('input[name="shipping_address"]');
+        if (firstRadio) {
+            firstRadio.checked = true;
+            onAddressSelect(firstRadio);
+        }
+        
+        // Remove required from new address inputs
+        document.getElementById('new_full_name').required = false;
+        document.getElementById('new_phone').required = false;
+        document.getElementById('new_address_line1').required = false;
+        document.getElementById('new_city').required = false;
+        document.getElementById('new_state').required = false;
+        document.getElementById('new_postal_code').required = false;
+    }
+}
+
+function onAddressSelect(radioElem) {
+    // Highlight selected card
+    document.querySelectorAll('.address-card').forEach(card => {
+        card.style.borderColor = 'var(--border)';
+    });
+    if (radioElem && radioElem.closest('.address-card')) {
+        radioElem.closest('.address-card').style.borderColor = 'var(--accent)';
+    }
+    
+    // Hide new address form if visible
+    const box = document.getElementById('new-address-form-box');
+    const toggleBtn = document.getElementById('toggle-new-addr-btn');
+    if (box && {% if addresses %}true{% else %}false{% endif %}) {
+        box.style.display = 'none';
+        if (toggleBtn) toggleBtn.innerHTML = '<i class="fas fa-plus"></i> Add New Address';
+        isNewAddressActive = false;
+        
+        document.getElementById('new_full_name').required = false;
+        document.getElementById('new_phone').required = false;
+        document.getElementById('new_address_line1').required = false;
+        document.getElementById('new_city').required = false;
+        document.getElementById('new_state').required = false;
+        document.getElementById('new_postal_code').required = false;
+    }
+}
+
+function onPaymentChange(radioElem) {
+    document.querySelectorAll('.payment-method-card').forEach(card => {
+        card.style.borderColor = 'var(--border)';
+    });
+    if (radioElem && radioElem.closest('.payment-method-card')) {
+        radioElem.closest('.payment-method-card').style.borderColor = 'var(--accent)';
+    }
+}
+
+function setCoupon(code) {
+    document.getElementById('coupon-code-input').value = code;
+    applyCoupon();
+}
+
+async function applyCoupon() {
+    const code = document.getElementById('coupon-code-input').value.trim();
+    const feedback = document.getElementById('coupon-feedback');
+    const discountRow = document.getElementById('discount-row');
+    const discountVal = document.getElementById('discount-val');
+    const grandTotalVal = document.getElementById('grand-total-val');
+    
+    if (!code) {
+        feedback.style.display = 'block';
+        feedback.style.color = 'var(--error)';
+        feedback.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please enter a promo code.';
+        return;
+    }
+    
+    try {
+        const formData = new URLSearchParams();
+        formData.append('coupon_code', code);
+        
+        const response = await fetch('{{ url_for("cart.validate_coupon") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        });
+        
+        const data = await response.json();
+        feedback.style.display = 'block';
+        
+        if (data.valid) {
+            currentDiscount = parseFloat(data.discount || 0);
+            const newTotal = Math.max(0, originalSubtotal - currentDiscount);
+            
+            feedback.style.color = 'var(--success)';
+            feedback.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message || 'Coupon applied successfully!'}`;
+            
+            discountRow.style.display = 'flex';
+            discountVal.textContent = currentDiscount.toFixed(2);
+            grandTotalVal.textContent = newTotal.toFixed(2);
+        } else {
+            currentDiscount = 0.0;
+            discountRow.style.display = 'none';
+            grandTotalVal.textContent = originalSubtotal.toFixed(2);
+            
+            feedback.style.color = 'var(--error)';
+            feedback.innerHTML = `<i class="fas fa-times-circle"></i> ${data.message || 'Invalid promo code.'}`;
+        }
+    } catch (err) {
+        feedback.style.display = 'block';
+        feedback.style.color = 'var(--error)';
+        feedback.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Network error applying coupon.';
+    }
+}
+
+// Form validation before submit
+document.getElementById('checkout-form').addEventListener('submit', function(e) {
+    const hasExistingAddresses = {% if addresses %}true{% else %}false{% endif %};
+    const selectedRadio = document.querySelector('input[name="shipping_address"]:checked');
+    
+    if (!selectedRadio && !isNewAddressActive) {
+        e.preventDefault();
+        alert('Please select a delivery address or fill in a new address.');
+        return;
+    }
+    
+    if (isNewAddressActive || !hasExistingAddresses) {
+        const name = document.getElementById('new_full_name').value.trim();
+        const phone = document.getElementById('new_phone').value.trim();
+        const line1 = document.getElementById('new_address_line1').value.trim();
+        const city = document.getElementById('new_city').value.trim();
+        const state = document.getElementById('new_state').value.trim();
+        const pin = document.getElementById('new_postal_code').value.trim();
+        
+        if (!name || !phone || !line1 || !city || !state || !pin) {
+            e.preventDefault();
+            alert('Please fill out all required shipping fields marked with *');
+            return;
+        }
+    }
+    
+    const submitBtn = document.getElementById('place-order-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing Your Order...';
+});
+</script>
+{% endblock %}

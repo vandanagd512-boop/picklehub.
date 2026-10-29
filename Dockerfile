@@ -22,4 +22,4 @@ RUN mkdir -p static/uploads/products static/uploads/profiles
 EXPOSE 5000
 
 # Run the application
-CMD ["gunicorn", "--config", ".gunicorn.conf.py", "run:app"]
+CMD ["gunicorn", "--config", ".gunicorn.conf.py", "app:app"]

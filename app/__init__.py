@@ -63,3 +63,6 @@ def create_app(config_class=Config):
     register_error_handlers(app)
     
     return app
+
+# WSGI application instance for gunicorn / deployment platforms
+app = create_app()

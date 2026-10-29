@@ -18,3 +18,4 @@ services:
     volumes:
       - ./static/uploads:/app/static/uploads
     restart: unless-stopped
+python 
